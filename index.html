@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>關東自駕遊 V47 (Single File) 🏎️</title>
+<title>關東自駕遊 V47 (好編輯版) 🏎️</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
@@ -28,11 +28,46 @@
     @keyframes spin-slow{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
     @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
     @keyframes pulse-soft{0%,100%{opacity:1}50%{opacity:0.8}}
-    .sakura-btn-container{position:relative;width:54px;height:54px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin:0 4px;overflow:visible;}
-    .sakura-icon-active{transform-origin:center center;filter:drop-shadow(0 4px 6px rgba(244,63,94,0.5));animation:pop-bloom 0.6s cubic-bezier(0.34,1.56,0.64,1) forwards,spin-sakura 12s linear infinite 0.6s;}
+    
+    /* --- 櫻花按鈕修正 (固定大小 + 旋轉) --- */
+    .sakura-btn-container{
+        position:relative;
+        width:60px; /* 固定容器寬度 */
+        height:60px; /* 固定容器高度 */
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        flex-shrink:0;
+        margin:0 2px;
+        overflow:visible;
+    }
+    .sakura-icon-active{
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transform-origin:center center;
+        filter:drop-shadow(0 4px 6px rgba(244,63,94,0.5));
+        /* 保留旋轉動畫 */
+        animation:pop-bloom 0.6s cubic-bezier(0.34,1.56,0.64,1) forwards,spin-sakura 12s linear infinite 0.6s;
+    }
+    .sakura-icon-inactive{
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        /* 使用 scale 縮小，而不是改變容器尺寸 */
+        transform:scale(0.75);
+        opacity:0.6;
+        transition:all 0.3s ease;
+    }
+    /* --- 櫻花按鈕修正結束 --- */
+
     @keyframes pop-bloom{0%{transform:scale(0) rotate(-45deg);opacity:0}60%{transform:scale(1.35) rotate(10deg);opacity:1}100%{transform:scale(1.25) rotate(0deg);opacity:1}}
     @keyframes spin-sakura{from{transform:scale(1.25) rotate(0deg)}to{transform:scale(1.25) rotate(360deg)}}
-    .sakura-icon-inactive{transform:scale(0.9);opacity:0.6;transition:all 0.3s ease;}
+    
     .sakura-text-active{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#FEF08A!important;font-size:16px;font-weight:900;text-shadow:0 2px 2px rgba(0,0,0,0.2);z-index:50;pointer-events:none;}
     .sakura-text-inactive{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:white;font-size:12px;font-weight:700;z-index:50;pointer-events:none;}
     .note-expand{transition:max-height 0.3s ease-in-out,opacity 0.3s ease-in-out,margin 0.3s ease;max-height:0;opacity:0;overflow:hidden;}
@@ -161,7 +196,7 @@ const INITIAL_ITINERARY = [
         "category": "food",
         "searchKeyword": "佐野拉麵 おぐら屋",
         "mapcode": "",
-        "note": "【首選】Oguraya\n位置：就在飯店隔壁 (佐野北部)。\n電話：0283-25-1128\n攻略：停車場超大。進去直接點「ラーメン (拉麵) + 餃子 (大顆)」。只收現金。\n\n【備案】拉麵 太七 (0283-21-8448)：離飯店15分，推薦「青蔥拉麵」+「烤內臟」。",
+        "note": "【首選】Oguraya\n位置：就在飯店隔壁 (佐野北部)。\n電話：0283-25-1128\n攻略：停車場超大。進去直接點「ラーメン (拉麵) +餃子 (大顆)」。只收現金。\n\n【備案】拉麵 太七 (0283-21-8448)：離飯店15分，推薦「青蔥拉麵」+「烤內臟」。",
         "expenses": [
           {
             "id": "e1",
@@ -1024,8 +1059,16 @@ const Header = ({ day, idx, totalDays, liveWeather, currentActualSteps, sort, se
                 </div>
                 <div className={`flex gap-1 hide-scrollbar py-4 px-2 overflow-x-auto mt-1 scroll-smooth-mobile ${sort ? 'opacity-30 pointer-events-none' : ''}`}>
                     {Array.from({ length: totalDays }).map((_, i) => (
-                        <button key={i} onClick={() => { setIdx(i); setSort(false); onScrollTop(); }} className={`flex-shrink-0 rounded-full transition-all shadow-none tap-transparent sakura-btn-container ${idx === i ? 'sakura-active' : ''}`}>
-                            {idx === i ? (<div className="sakura-icon-active text-rose-200"><Icon n="Sakura" s={54} c="w-full h-full" /></div>) : (<div className="sakura-icon-inactive text-white"><Icon n="Sakura" s={46} c="w-full h-full" /></div>)}
+                        <button key={i} onClick={() => { setIdx(i); setSort(false); onScrollTop(); }} className={`flex-shrink-0 rounded-full transition-all shadow-none tap-transparent sakura-btn-container`}>
+                            {idx === i ? (
+                                <div className="sakura-icon-active text-rose-200">
+                                    <Icon n="Sakura" s={54} c="w-full h-full" />
+                                </div>
+                            ) : (
+                                <div className="sakura-icon-inactive text-white">
+                                    <Icon n="Sakura" s={54} c="w-full h-full" />
+                                </div>
+                            )}
                             <span className={idx === i ? 'sakura-text-active' : 'sakura-text-inactive'}>D{i + 1}</span>
                         </button>
                     ))}
@@ -1253,7 +1296,26 @@ const EditModal = ({ editItem, setEditItem, data, onClose, onSave, onDelete, set
                         <div className="flex-1"><label className="text-xs font-bold text-slate-500 block mb-1">日期 (可跨日移動)</label><select value={editItem.dayId} onChange={e => setEditItem({ ...editItem, dayId: e.target.value })} className="w-full bg-white p-2 rounded-xl font-bold text-slate-700 outline-none border border-slate-200 text-sm">{data.map((d, i) => (<option key={d.id} value={d.id}>D{i + 1} ({d.date})</option>))}</select></div>
                         {editItem.type === 'normal' && (<div className="w-24"><label className="text-xs font-bold text-slate-500 block mb-1">時間</label><input type="time" value={editItem.time || ''} onChange={e => setEditItem({ ...editItem, time: e.target.value })} className="w-full bg-white p-2 rounded-xl font-bold text-slate-700 outline-none border border-slate-200 text-sm text-center" /></div>)}
                     </div>
-                    {editItem.type === 'normal' && (<div className="flex gap-2 items-end"><div className="w-[30%] space-y-1"><label className="text-xs font-bold text-slate-500 block">時間</label><TimeScroll val={editItem.time || ''} setVal={(v) => setEditItem({ ...editItem, time: v })} /></div><div className="w-[70%] space-y-1"><label className="text-xs font-bold text-slate-500 block">標題</label><input type="text" value={editItem.title} onChange={e => setEditItem({ ...editItem, title: e.target.value })} className="w-full h-[60px] bg-white border-2 border-slate-200 rounded-2xl px-4 font-bold text-xl outline-none focus:border-blue-400 transition-colors placeholder:text-slate-300" placeholder="行程名稱..." /></div></div>)}
+                    {/* 這裡修改了標題編輯區塊 */}
+                    {editItem.type === 'normal' && (
+                        <>
+                            <div className="space-y-1 mb-2">
+                                <label className="text-xs font-bold text-slate-500 block">時間選擇</label>
+                                <TimeScroll val={editItem.time || ''} setVal={(v) => setEditItem({ ...editItem, time: v })} />
+                            </div>
+                            <div className="space-y-1 pt-2">
+                                <label className="text-xs font-bold text-slate-500 block">行程標題</label>
+                                <textarea 
+                                    value={editItem.title} 
+                                    onChange={e => setEditItem({ ...editItem, title: e.target.value })} 
+                                    className="w-full bg-white border-2 border-slate-200 rounded-2xl p-4 font-bold text-xl outline-none focus:border-blue-400 transition-colors placeholder:text-slate-300 resize-none leading-normal" 
+                                    rows={2}
+                                    placeholder="行程名稱..." 
+                                />
+                            </div>
+                        </>
+                    )}
+                    
                     {editItem.type === 'memo' && (<input type="text" value={editItem.title} onChange={e => setEditItem({ ...editItem, title: e.target.value })} className="w-full h-[60px] bg-white border-2 border-yellow-200 rounded-2xl px-4 font-bold text-2xl outline-none focus:border-yellow-400 transition-colors placeholder:text-slate-300" placeholder="便條標題..." />)}
                     
                     {/* Memo Layout */}
@@ -1463,14 +1525,14 @@ const StepsModal = ({ onClose, dailyTarget, tStep, setTStep, saveBtnText, onSave
                 <div className="bg-gradient-to-br from-slate-50 to-white border border-slate-100 rounded-2xl p-4 mb-5 relative z-10 shadow-inner">
                     <div className="flex justify-between items-end mb-2">
                         <span className="text-xs font-bold text-slate-400">完成度</span>
+                        {/* 顯示數字 */}
                         <span className="text-2xl font-black text-rose-500">{Math.round(livePercent)}%</span>
                     </div>
-                    {/* 進度條容器 */}
-                    <div className="w-full h-4 bg-slate-200 rounded-full overflow-hidden shadow-inner border border-slate-200">
-                        {/* ★ 修改重點：移除了 progress-bar-stripe 以免蓋掉顏色，並確保寬度寫法正確 */}
+                    <div className="w-full h-4 bg-slate-100 rounded-full overflow-hidden shadow-inner border border-slate-200">
+                        {/* ★ 關鍵修改：樣式寬度改用 livePercent + '%' */}
                         <div 
-                            className="h-full bg-gradient-to-r from-pink-400 to-rose-500 transition-all duration-300 ease-out shadow-[0_0_10px_rgba(244,63,94,0.5)]" 
-                            style={{ width: `${livePercent}%` }}
+                            className="h-full bg-gradient-to-r from-pink-400 to-rose-500 transition-all duration-300 ease-out progress-bar-stripe" 
+                            style={{ width: livePercent + '%' }}
                         ></div>
                     </div>
                     <div className="flex justify-between text-[10px] font-bold text-slate-400 mt-1">
