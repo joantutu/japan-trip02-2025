@@ -1,0 +1,1765 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>關東自駕遊 V47 (穩定版) 🏎️</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+    body{touch-action:manipulation;background-color:#fff7ed;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-tap-highlight-color:transparent;overscroll-behavior-y:none;-webkit-user-select:none;user-select:none;}
+    input,textarea{-webkit-user-select:auto;user-select:auto;font-size:16px!important}
+    .hide-scrollbar::-webkit-scrollbar{display:none}.hide-scrollbar{-ms-overflow-style:none;scrollbar-width:none}
+    .scroll-smooth-mobile{-webkit-overflow-scrolling:touch;scroll-behavior:smooth}
+    .pb-safe{padding-bottom:env(safe-area-inset-bottom,24px)}.pt-safe{padding-top:env(safe-area-inset-top,0px)}.mb-safe{margin-bottom:env(safe-area-inset-bottom,24px)}
+    .card-shadow{box-shadow:0 2px 10px -1px rgba(0,0,0,0.05)}
+    .font-rounded{font-weight:800;letter-spacing:0.03em;}
+    .drag-handle,.drag-handle-memo{cursor:grab;touch-action:none!important;user-select:none;-webkit-user-select:none;}
+    .drag-handle:active,.drag-handle-memo:active{cursor:grabbing;}
+    .sortable-ghost{opacity:0.4;background-color:#fef9c3;border:2px dashed #fcd34d;}
+    .sortable-drag{opacity:1;background:white;box-shadow:0 10px 15px -3px rgba(0,0,0,0.1);transform:scale(1.02);z-index:100;}
+    .weather-spin{animation:spin-slow 10s linear infinite;}
+    .weather-float{animation:float 3s ease-in-out infinite;}
+    .weather-pulse{animation:pulse-soft 2s infinite;}
+    @keyframes spin-slow{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+    @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+    @keyframes pulse-soft{0%,100%{opacity:1}50%{opacity:0.8}}
+    
+    /* --- 櫻花按鈕修正開始 --- */
+    .sakura-btn-container{
+        position:relative;
+        width:60px; /* 固定容器寬度 */
+        height:60px; /* 固定容器高度 */
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        flex-shrink:0;
+        margin:0 2px;
+        overflow:visible;
+    }
+    .sakura-icon-active{
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transform-origin:center center;
+        filter:drop-shadow(0 4px 6px rgba(244,63,94,0.5));
+        /* 保留旋轉動畫 */
+        animation:pop-bloom 0.6s cubic-bezier(0.34,1.56,0.64,1) forwards,spin-sakura 12s linear infinite 0.6s;
+    }
+    .sakura-icon-inactive{
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        /* 使用 scale 縮小，而不是改變容器尺寸 */
+        transform:scale(0.75);
+        opacity:0.6;
+        transition:all 0.3s ease;
+    }
+    /* --- 櫻花按鈕修正結束 --- */
+
+    @keyframes pop-bloom{0%{transform:scale(0) rotate(-45deg);opacity:0}60%{transform:scale(1.35) rotate(10deg);opacity:1}100%{transform:scale(1.25) rotate(0deg);opacity:1}}
+    @keyframes spin-sakura{from{transform:scale(1.25) rotate(0deg)}to{transform:scale(1.25) rotate(360deg)}}
+    
+    .sakura-text-active{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#FEF08A!important;font-size:16px;font-weight:900;text-shadow:0 2px 2px rgba(0,0,0,0.2);z-index:50;pointer-events:none;}
+    .sakura-text-inactive{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:white;font-size:12px;font-weight:700;z-index:50;pointer-events:none;}
+    .note-expand{transition:max-height 0.3s ease-in-out,opacity 0.3s ease-in-out,margin 0.3s ease;max-height:0;opacity:0;overflow:hidden;}
+    .note-expand.open{max-height:800px;opacity:1;margin-bottom:12px;}
+    .sort-mode-bg{background-image:radial-gradient(#e5e7eb 1px,transparent 1px);background-size:20px 20px;}
+    .memo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:8px;}
+    .no-scale-anim{transform:none!important;transition:none!important;}
+    .current-item-glow { box-shadow: 0 0 15px rgba(244, 63, 94, 0.4); border-color: #fda4af; animation: border-pulse 2s infinite; }
+    @keyframes border-pulse { 0% { border-color: #fda4af; } 50% { border-color: #f43f5e; } 100% { border-color: #fda4af; } }
+    .progress-bar-stripe { background-image: linear-gradient(45deg,rgba(255,255,255,.15) 25%,transparent 25%,transparent 50%,rgba(255,255,255,.15) 50%,rgba(255,255,255,.15) 75%,transparent 75%,transparent); background-size: 1rem 1rem; animation: progress-stripes 1s linear infinite; }
+    @keyframes progress-stripes { from { background-position: 1rem 0; } to { background-position: 0 0; } }
+    @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+    .animate-fade-in { animation: fade-in 0.2s ease-out; }
+</style>
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://aistudiocdn.com/react@^19.2.1",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.1/",
+    "react/": "https://aistudiocdn.com/react@^19.2.1/",
+    "sortablejs": "https://aistudiocdn.com/sortablejs@^1.15.6",
+    "html2canvas": "https://aistudiocdn.com/html2canvas@^1.4.1"
+  }
+}
+</script>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useEffect,useRef,useCallback}=React;
+
+// Constants
+const EXCHANGE_RATE = 0.22;
+const STORAGE_LIMIT_WARNING = 4.5 * 1024 * 1024;
+const DEFAULT_DAILY_GOAL = 10000;
+const CATS={sightseeing:{l:'景點',i:'Camera',c:'bg-rose-100 text-rose-600'},food:{l:'美食',i:'Utensils',c:'bg-orange-100 text-orange-600'},shopping:{l:'購物',i:'ShoppingBag',c:'bg-pink-100 text-pink-600'},transport:{l:'交通',i:'Car',c:'bg-slate-100 text-slate-600'},accommodation:{l:'住宿',i:'Bed',c:'bg-indigo-100 text-indigo-600'},other:{l:'彈性',i:'MoreVertical',c:'bg-emerald-100 text-emerald-600'},memo:{l:'便條',i:'StickyNote',c:'bg-yellow-100 text-yellow-600'}};
+const W_ICONS={sunny:'Sun',cloudy:'Cloud',snow:'Snowflake',rain:'CloudRain'};
+const WEATHER_COLORS={sunny:'text-yellow-300',cloudy:'text-white/80',rain:'text-blue-300',snow:'text-white'};
+const WEATHER_LOCATIONS={'day1':'327-0102','day2':'321-2611','day3':'321-2601','day4':'311-1301','day5':'300-4352','day6':'110-0005','day7':'282-0004'};
+const LOCATIONS_COORD=[{id:'day1',lat:36.3146,lng:139.5797},{id:'day2',lat:36.7490,lng:139.5033},{id:'day3',lat:36.7959,lng:139.4337},{id:'day4',lat:36.3144,lng:140.5743},{id:'day5',lat:36.2048,lng:140.1067},{id:'day6',lat:35.7140,lng:139.7741},{id:'day7',lat:35.7767,lng:140.3188}];
+const INITIAL_ITINERARY = [
+  {
+    "id": "day1",
+    "date": "12/28",
+    "dayOfWeek": "(日)",
+    "weather": "sunny",
+    "location": "成田 -> 佐野",
+    "steps": 0,
+    "items": [
+      {
+        "id": "d1-01",
+        "time": "11:25",
+        "title": "吉 抵達 (BR108)",
+        "category": "transport",
+        "expenses": [
+          {
+            "id": "1",
+            "label": "機票",
+            "amount": 0,
+            "currency": "NT",
+            "category": "transport"
+          }
+        ],
+        "note": "11:25 吉 BR108 NRT T1",
+        "mapcode": "",
+        "searchKeyword": "",
+        "completed": false,
+        "steps": 500,
+        "type": "normal"
+      },
+      {
+        "id": "d1-02",
+        "time": "12:00",
+        "title": "王方 抵達 (BR184)",
+        "category": "transport",
+        "expenses": [],
+        "note": "12:00 王方 BR184 NRT T1",
+        "mapcode": "",
+        "searchKeyword": "",
+        "completed": false,
+        "steps": 0,
+        "type": "normal"
+      },
+      {
+        "id": "d1-1",
+        "time": "13:00",
+        "title": "成田機場：取車出發",
+        "category": "transport",
+        "note": "座駕：Toyota Estima 4WD (Sakura Rent A Car)\n🚙 備註：已預約雪胎 (Snow Tires)\n導航設定：請工作人員設定「電話號碼搜尋」模式。\n目標：直奔佐野 (車程約 1.5 ~ 2 小時)。",
+        "completed": false,
+        "type": "normal",
+        "expenses": [
+          {
+            "id": "e1",
+            "label": "租車費",
+            "amount": 25446,
+            "currency": "NT",
+            "category": "transport"
+          }
+        ],
+        "steps": 2000
+      },
+      {
+        "id": "d1-2",
+        "time": "14:00",
+        "title": "中途休息：羽生 PA (下行)",
+        "category": "food",
+        "note": "地點：Pasar 羽生 (下り) ※注意不要跑到對向的鬼平江戶處。\n任務：\n1. 上廁所 (這裡設施很新又乾淨)。\n2. 買「Mini One」可頌 或 星巴克 (車上解饞用)。\n停留時間：約 20 分鐘。",
+        "completed": false,
+        "type": "normal",
+        "expenses": [
+          {
+            "id": "e1",
+            "label": "點心飲料",
+            "amount": 1500,
+            "currency": "JPY",
+            "category": "food"
+          }
+        ],
+        "steps": 500
+      },
+      {
+        "id": "d1-3",
+        "time": "15:00",
+        "title": "第一站：佐野拉麵 おぐら屋",
+        "category": "food",
+        "searchKeyword": "佐野拉麵 おぐら屋",
+        "mapcode": "",
+        "note": "【首選】Oguraya\n位置：就在飯店隔壁 (佐野北部)。\n電話：0283-25-1128\n攻略：停車場超大。進去直接點「ラーメン (拉麵) + 餃子 (大顆)」。只收現金。\n\n【備案】拉麵 太七 (0283-21-8448)：離飯店15分，推薦「青蔥拉麵」+「烤內臟」。",
+        "expenses": [
+          {
+            "id": "e1",
+            "label": "預估餐費",
+            "amount": 3000,
+            "currency": "JPY",
+            "category": "food"
+          }
+        ],
+        "completed": false,
+        "type": "normal",
+        "steps": 200
+      },
+      {
+        "id": "d1-4",
+        "time": "16:00",
+        "title": "第二站：磯山弁財天",
+        "category": "sightseeing",
+        "searchKeyword": "磯山弁財天",
+        "mapcode": "64 695 571*64",
+        "note": "Mapcode: 64 695 571*64\n關鍵：Check-in 前先去逛！(16:30 日落，要趁有光線)。\n停車：直接停飯店停車場，用走的過去。\n必看重點：\n1. 出流原弁天池 (名水百選，水質清澈)。\n2. 風穴 (岩石洞口)。\n3. 白蛇像 (求財)。",
+        "completed": false,
+        "type": "normal",
+        "steps": 1500
+      },
+      {
+        "id": "d1-5",
+        "time": "16:40",
+        "title": "飯店 Check-in (一乃館)",
+        "category": "accommodation",
+        "searchKeyword": "ホテル一乃館",
+        "mapcode": "64 695 540*84",
+        "note": "🛏️ 房型：一間房，有早餐\n📍 地址：1262 Izuruharacho, Sano, Tochigi 327-0102\n電話：0283-25-0228\nMapcode: 64 695 540*84\n任務：\n1. 辦理入住、放行李。\n2. 確認明早早餐時間 (約 07:30)。\n3. 拿房間的冰桶 (去走廊製冰機裝冰)。",
+        "completed": false,
+        "type": "normal",
+        "expenses": [
+          {
+            "id": "e1",
+            "label": "住宿費",
+            "amount": 13332,
+            "currency": "NT",
+            "category": "accommodation"
+          }
+        ],
+        "steps": 500
+      },
+      {
+        "id": "d1-6",
+        "time": "17:15",
+        "title": "第四站：買酒軍火庫 (YAMAYA)",
+        "category": "shopping",
+        "searchKeyword": "酒のやまや 佐野店",
+        "note": "地點：酒的 YAMAYA 佐野店 (やまや)\n電話：0283-20-4828 (開到 21:00)\n🛒 必買梅酒清單：\n1. 梅乃宿 あらごし梅酒 (果肉系王者，必買！)\n2. 鳳凰美田 熟成秘蔵梅酒 (櫪木限定)\n3. 山崎焙煎樽梅酒\n4. CHOYA 黑糖梅酒\n補給：順便買 2L 大瓶水、無糖綠茶。",
+        "expenses": [
+          {
+            "id": "e2",
+            "label": "酒水採購",
+            "amount": 10000,
+            "currency": "JPY",
+            "category": "shopping"
+          }
+        ],
+        "completed": false,
+        "type": "normal",
+        "steps": 800
+      },
+      {
+        "id": "d1-7",
+        "time": "18:00",
+        "title": "第五站：足利花卉公園 (光之花庭)",
+        "category": "sightseeing",
+        "searchKeyword": "あしかがフラワーパーク",
+        "mapcode": "64 512 293*12",
+        "note": "Mapcode: 64 512 293*12\n移動：往西開約 15 分鐘。\n電話：0284-91-4939\n重點：日本三大燈飾，非常壯觀。\n注意：這裡非常冷！空曠風大，請全副武裝 (圍巾/手套)。",
+        "expenses": [
+          {
+            "id": "e3",
+            "label": "夜間門票",
+            "amount": 0,
+            "currency": "JPY",
+            "category": "sightseeing"
+          }
+        ],
+        "completed": false,
+        "type": "normal",
+        "steps": 4000
+      },
+      {
+        "id": "d1-8",
+        "time": "20:30",
+        "title": "第六站：消夜補給 (AEON)",
+        "category": "shopping",
+        "searchKeyword": "イオンスタイル佐野新都市",
+        "note": "地點：AEON Style 佐野新都市\n電話：0283-20-5252\n目標區：1F 食品賣場 (開到 23:00)。\n必買清單：\n1. 半額熟食/炸物/壽司。\n2. 櫪木縣產草莓 (Tochiotome)。\n3. 酒類補給。",
+        "completed": false,
+        "type": "normal",
+        "expenses": [
+          {
+            "id": "e1",
+            "label": "超市採購",
+            "amount": 5000,
+            "currency": "JPY",
+            "category": "shopping"
+          }
+        ],
+        "steps": 1500
+      },
+      {
+        "id": "d1-9",
+        "time": "21:30",
+        "title": "返回飯店：微醺 Party",
+        "category": "other",
+        "note": "享受滿桌半價熟食 + 鮮甜草莓 + 梅乃宿梅酒。\n⚠️ D4 才要去茨城買百年梅酒，今晚先喝便利商店的。",
+        "completed": false,
+        "type": "normal"
+      }
+    ]
+  },
+  {
+    "id": "day2",
+    "date": "12/29",
+    "dayOfWeek": "(一)",
+    "weather": "cloudy",
+    "location": "佐野 → 奧日光 → 川治",
+    "steps": 0,
+    "items": [
+      {
+        "id": "d2-1",
+        "time": "07:30",
+        "title": "早餐 & 退房",
+        "category": "food",
+        "note": "地點：Hotel Ichinokan (日式定食)。\n準備：吃飽後退房。請將厚外套、圍巾拿出來放在車內座位旁，上山馬上要穿。",
+        "completed": false,
+        "type": "normal"
+      },
+      {
+        "id": "d2-2",
+        "time": "09:00",
+        "title": "準時出發 (目標：日光)",
+        "category": "transport",
+        "note": "導航設定：輸入電話 0288-54-0560 (東照宮大駐車場)。\n車程：約 50-60 分鐘 (走高速)。\n⚠️ 關鍵：絕對不要拖到 10:00 才出門，否則排停車場會耗掉 1 小時。",
+        "completed": false,
+        "type": "normal"
+      },
+      {
+        "id": "d2-3",
+        "time": "10:00",
+        "title": "停車策略",
+        "category": "transport",
+        "note": "【首選】日光東照宮 大駐車場 (0288-54-0560)：表參道正下方。若隊伍有在動就排。\n【備案】西参道第1駐車場 (0288-53-0909)：若首選動彈不得，馬上掉頭停這裡 (走路10分鐘上坡)。",
+        "completed": false,
+        "type": "normal",
+        "expenses": [
+          {
+            "id": "e1",
+            "label": "停車費預估",
+            "amount": 1000,
+            "currency": "JPY",
+            "category": "transport"
+          }
+        ],
+        "steps": 500
+      },
+      {
+        "id": "d2-4",
+        "time": "10:15",
+        "title": "景點：日光東照宮",
+        "category": "sightseeing",
+        "searchKeyword": "日光東照宮",
+        "note": "停留時間：約 2 ~ 2.5 小時。\n必看：\n1. 陽明門 (國寶)。\n2. 眠貓 (通往奧宮入口)。\n3. 鳴龍 (藥師堂聽回音，需脫鞋)。\n4. 神廄舍 (三猿)。",
+        "completed": false,
+        "type": "normal",
+        "expenses": [
+          {
+            "id": "e1",
+            "label": "門票",
+            "amount": 2600,
+            "currency": "JPY",
+            "category": "sightseeing"
+          }
+        ],
+        "steps": 6000
+      },
+      {
+        "id": "d2-5",
+        "time": "12:45",
+        "title": "午餐：順路外帶 (金谷飯店歷史館)",
+        "category": "food",
+        "searchKeyword": "金谷ホテル歴史館 カテッジイン・レストラン",
+        "note": "位置：國道120號上，經過神橋後約 3-5 分鐘 (右手邊)。\n電話：0288-50-1873\n必買菜單：\n🥇 夢幻豬排三明治 (¥1,200)\n🥈 日光鮭魚咖哩飯 (¥1,500)\n🍞 金谷咖哩麵包\n備案：れんがya (炒麵老店) 0288-54-0733。",
+        "completed": false,
+        "type": "normal",
+        "expenses": [
+          {
+            "id": "e1",
+            "label": "豬排三明治",
+            "amount": 1200,
+            "currency": "JPY",
+            "category": "food"
+          },
+          {
+            "id": "e2",
+            "label": "鮭魚咖哩",
+            "amount": 1500,
+            "currency": "JPY",
+            "category": "food"
+          }
+        ]
+      },
+      {
+        "id": "d2-6",
+        "time": "13:30",
+        "title": "兜風：挑戰「伊いろは坂」",
+        "category": "transport",
+        "note": "路況：單向通行的山路，48 個髮夾彎。\n駕駛注意：容易暈車者請先吃藥。邊開邊享受車上的三明治午餐！",
+        "completed": false,
+        "type": "normal"
+      },
+      {
+        "id": "d2-7",
+        "time": "14:15",
+        "title": "景點：奧日光 (華嚴瀑布)",
+        "category": "sightseeing",
+        "searchKeyword": "華厳の滝",
+        "note": "電話：0288-55-0030 (縣營停車場)。\n必做：\n1. 搭電梯 (570円) 下去觀瀑台看冰瀑。\n2. 中禪寺湖散步。\n⚠️ 撤退死線：16:00 前必須下山。太陽下山後路面易結冰。",
+        "completed": false,
+        "type": "normal",
+        "expenses": [
+          {
+            "id": "e1",
+            "label": "觀瀑電梯",
+            "amount": 570,
+            "currency": "JPY",
+            "category": "sightseeing"
+          }
+        ],
+        "steps": 2500
+      },
+      {
+        "id": "d2-8",
+        "time": "17:30",
+        "title": "晚餐：今市炸豬排 (あづま)",
+        "category": "food",
+        "searchKeyword": "とんかつ あづま",
+        "note": "位置：下山往川治的順路途中。\n電話：0288-22-5878\n必點：和豚もちぶた炸豬排定食。\n⚠️ 備案確認：Google Maps 顯示營業中不一定準。若到現場沒開，直接去備案超市。\n備案：Lion D'or 鬼怒川店 (超市) 0288-70-1311。",
+        "completed": false,
+        "type": "normal",
+        "expenses": [
+          {
+            "id": "e1",
+            "label": "預估餐費",
+            "amount": 4000,
+            "currency": "JPY",
+            "category": "food"
+          }
+        ]
+      },
+      {
+        "id": "d2-9",
+        "time": "19:00",
+        "title": "飯店 Check-in (寿庵)",
+        "category": "accommodation",
+        "searchKeyword": "祝い宿 寿庵",
+        "mapcode": "367 835 100*67",
+        "note": "🛏️ 房型：日式四人房，有早餐\n📍 地址：Kawaji 52, Nikko, Tochigi 321-2611\n電話：0288-78-1101\nMapcode: 367 835 100*67\n⚠️ 重要：因會晚到 (19:00)，請在 **D1 飯店退房時**，請櫃台幫忙打電話給今晚飯店告知會晚到 (19:00)，以免被鎖門。",
+        "completed": false,
+        "type": "normal",
+        "expenses": [
+          {
+            "id": "e1",
+            "label": "住宿費",
+            "amount": 18311,
+            "currency": "NT",
+            "category": "accommodation"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "day3",
+    "date": "12/30",
+    "dayOfWeek": "(二)",
+    "weather": "snow",
+    "location": "奧日光與秘境湯西川",
+    "steps": 0,
+    "items": [
+      {
+        "id": "d3-1",
+        "time": "10:00",
+        "title": "出發：川治溫泉 寿庵",
+        "category": "transport",
+        "note": "準備：退房，確認車上雪刷位置。",
+        "completed": false,
+        "type": "normal"
+      },
+      {
+        "id": "d3-2",
+        "time": "10:10",
+        "title": "景點：龍王峽",
+        "category": "sightseeing",
+        "searchKeyword": "龍王峡",
+        "mapcode": "367 686 704*87",
+        "note": "導航電話：0288-77-1053 (旬菜蔵)\nMapcode: 367 686 704*87\n停車：免費。\n玩法：走「白龍峽」步道至虹見橋拍照。若步道結冰請勿勉強。\n天氣預警：❄️ 極冷/大雪機率高。",
+        "completed": false,
+        "type": "normal",
+        "steps": 3000
+      },
+      {
+        "id": "d3-new-1",
+        "time": "11:15",
+        "title": "【重要】最後補給：7-Eleven 鬼怒川立岩店",
+        "category": "shopping",
+        "searchKeyword": "セブン-イレブン 鬼怒川立岩店",
+        "note": "導航電話：0288-77-2277\n任務：這是進深山前最後一家 24h 超商。必買酒、零食、宵夜、水、暖暖包。\n買完後調頭往北，正式前往湯西川。",
+        "completed": false,
+        "type": "normal",
+        "steps": 500
+      },
+      {
+        "id": "d3-3",
+        "time": "12:10",
+        "title": "午餐：道の駅 湯西川",
+        "category": "food",
+        "searchKeyword": "道の駅 湯西川",
+        "note": "導航電話：0288-78-1222\n🚫🐂 不吃牛攻略：\n1. 鴨肉蒸籠蕎麥麵 (鴨肉是名產)\n2. 水壩咖哩 (點鴨肉或野菜口味)\n3. 鹿肉可樂餅 (野味)\n門口有免費足湯。",
+        "completed": false,
+        "type": "normal",
+        "expenses": [
+          {
+            "id": "1",
+            "label": "預估餐費",
+            "amount": 3000,
+            "currency": "JPY",
+            "category": "food"
+          }
+        ]
+      },
+      {
+        "id": "d3-4",
+        "time": "14:00",
+        "title": "景點：平家之里",
+        "category": "sightseeing",
+        "searchKeyword": "平家の里",
+        "mapcode": "716 161 037*14",
+        "note": "導航電話：0288-98-0126\n營業：~16:30 (最終入場 16:00)\n看點：茅草屋聚落與雪景。內有茶屋可喝熱紅豆湯。",
+        "completed": false,
+        "type": "normal",
+        "expenses": [
+          {
+            "id": "1",
+            "label": "門票",
+            "amount": 1020,
+            "currency": "JPY",
+            "category": "sightseeing"
+          }
+        ],
+        "steps": 2500
+      },
+      {
+        "id": "d3-5",
+        "time": "15:10",
+        "title": "飯店 Check-in (本家伴久)",
+        "category": "accommodation",
+        "searchKeyword": "本家伴久",
+        "mapcode": "716 161 037*14",
+        "note": "🛏️ 房型：日式四人房，有晚餐、早餐\n📍 地址：Yunishikawa 749, Nikko, Tochigi 321-2601\n導航電話：0288-98-0011\nMapcode: 716 161 037*14\n入住 SOP：\n1. 代客泊車。\n2. 確認晚餐 (Check-in 時再次提醒不吃牛：予約時に牛肉NGと伝えました)。\n3. 預約早餐時間 (7:30/8:00/8:30)。\n享受：露天風呂 & 圍爐裏晚餐。",
+        "completed": false,
+        "type": "normal",
+        "expenses": [
+          {
+            "id": "1",
+            "label": "住宿費",
+            "amount": 24134,
+            "currency": "NT",
+            "category": "accommodation"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "day4",
+    "date": "12/31",
+    "dayOfWeek": "(三)",
+    "weather": "sunny",
+    "location": "雪山 → 海濱 (除夕圍爐)",
+    "steps": 0,
+    "items": [
+      {
+        "id": "d4-1",
+        "time": "10:00",
+        "title": "出發：前往大洗 (移動日)",
+        "category": "transport",
+        "note": "⚠️ 駕駛注意：下山路段 (國道121號) 隧道出口可能有黑冰，勿急煞。\n導航設定：第一站設定「笠間 PA (0296-70-1200)」。",
+        "completed": false,
+        "type": "normal"
+      },
+      {
+        "id": "d4-new-1",
+        "time": "11:45",
+        "title": "休息：笠間 PA (Kasama)",
+        "category": "food",
+        "note": "特色：設施新、廁所乾淨。\n必吃：笠間稻荷壽司 (核桃/舞菇口味，無牛OK)、絲滑地瓜蒙布朗。\n注意：別逛太久，留肚子去大洗吃海鮮。",
+        "completed": false,
+        "type": "normal",
+        "steps": 500
+      },
+      {
+        "id": "d4-2",
+        "time": "13:00",
+        "title": "午餐：大洗海鮮 (二選一)",
+        "category": "food",
+        "searchKeyword": "大洗海鮮市場",
+        "note": "選項 A (快速)：明太公園 (029-219-4101) - 巨無霸飯糰。\n選項 B (豐盛)：大洗海鮮市場 (029-267-0111) - 海鮮丼、濱燒、鮟鱇魚鍋。\n注意：除夕人潮多可能需排隊。",
+        "completed": false,
+        "type": "normal"
+      },
+      {
+        "id": "d4-3",
+        "time": "14:30",
+        "title": "景點：大洗磯前神社",
+        "category": "sightseeing",
+        "searchKeyword": "大洗磯前神社",
+        "mapcode": "239 535 445*58",
+        "note": "導航電話：029-267-2637\nMapcode: 239 535 445*58\n玩法：先參拜本殿，再走下去海邊拍「神磯鳥居」。\n注意：海風極強，請戴帽子圍巾。",
+        "completed": false,
+        "type": "normal",
+        "steps": 2500
+      },
+      {
+        "id": "d4-4",
+        "time": "15:40",
+        "title": "買酒：大洗 Seaside Station",
+        "category": "shopping",
+        "searchKeyword": "大洗シーサイドステーション",
+        "mapcode": "239 506 461*34",
+        "note": "導航電話：029-264-9123\nMapcode: 239 506 461*34\n目標：大洗まいわい市場。\n必買：百年梅酒 (明利酒類，藍標或紅標)、地瓜乾 (茨城特產)。\n生鮮去下一站超市買。",
+        "completed": false,
+        "type": "normal",
+        "steps": 1000
+      },
+      {
+        "id": "d4-new-2",
+        "time": "16:40",
+        "title": "【戰場】除夕晚餐採買：Kasumi 超市",
+        "category": "shopping",
+        "searchKeyword": "カスミ フードスクエア 水戸西原店",
+        "note": "地點：Kasumi Food Square 水戶西原店 (029-253-4611)。\n必買 (不吃牛)：\n1. 茨城産ローズポーク (Rose Pork) 豬肉片。\n2. 火鍋湯底 (海鮮/雞湯/豆乳，確認無牛油)。\n3. 豪華生魚片、跨年蕎麥麵 (炸蝦)。\n4. 茨城草莓。\n⚠️ 17:00 前入場，以免熟食被搶光。",
+        "completed": false,
+        "type": "normal",
+        "expenses": [
+          {
+            "id": "e-ny",
+            "label": "除夕採購預算",
+            "amount": 5000,
+            "currency": "JPY",
+            "category": "shopping"
+          }
+        ],
+        "steps": 1500
+      },
+      {
+        "id": "d4-5",
+        "time": "18:00",
+        "title": "民宿 Check-in (Mito House)",
+        "category": "accommodation",
+        "searchKeyword": "一棟貸しの宿 水戸ハウス",
+        "mapcode": "47 161 388*03",
+        "note": "🛏️ 房型：包棟，沒早餐\n📍 地址：1 Chome-2-55 Kanemachi, Mito, Ibaraki 310-0066\n電話：090-5639-7300\nMapcode: 47 161 388*03\n晚上：煮火鍋、吃蕎麥麵、喝梅酒、看紅白。",
+        "completed": false,
+        "type": "normal",
+        "expenses": [
+          {
+            "id": "1",
+            "label": "住宿費",
+            "amount": 9316,
+            "currency": "NT",
+            "category": "accommodation"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "day5",
+    "date": "1/1",
+    "dayOfWeek": "(四)",
+    "weather": "sunny",
+    "location": "世界大佛與筑波山迎新",
+    "steps": 0,
+    "items": [
+      {
+        "id": "d5-1",
+        "time": "10:00",
+        "title": "出發：前往 Outlet",
+        "category": "transport",
+        "note": "策略：避開神社車潮，走內陸舒適路線。\n導航：Ami Premium Outlets (029-829-5770)。\n路徑：上常磐道 (高速)，避開平面。",
+        "completed": false,
+        "type": "normal"
+      },
+      {
+        "id": "d5-2",
+        "time": "11:00",
+        "title": "午餐+逛街：Ami Premium Outlets",
+        "category": "shopping",
+        "searchKeyword": "あみプレミアム・アウトレット",
+        "note": "特色：1/1 初売り，好停車。\n🍽️ 不吃牛午餐：\n1. Kua`Aina (酪梨雞肉三明治/炸魚)。\n2. Chinrai (珍來) - 炒飯、大餃子。\n3. 成田夢牧場霜淇淋。",
+        "completed": false,
+        "type": "normal",
+        "expenses": [
+          {
+            "id": "1",
+            "label": "午餐+購物預算",
+            "amount": 5000,
+            "currency": "JPY",
+            "category": "food"
+          }
+        ],
+        "steps": 6000
+      },
+      {
+        "id": "d5-3",
+        "time": "13:40",
+        "title": "景點：牛久大佛",
+        "category": "sightseeing",
+        "searchKeyword": "牛久大仏",
+        "mapcode": "65 086 720*25",
+        "note": "導航電話：029-889-2931 (離 Outlet 5分鐘)。\n攻略：拍外觀就好。若進內部電梯排隊超過 30 分鐘建議放棄，在大佛腳下敲鐘祈福即可。",
+        "completed": false,
+        "type": "normal",
+        "expenses": [
+          {
+            "id": "1",
+            "label": "門票預算",
+            "amount": 2000,
+            "currency": "JPY",
+            "category": "sightseeing"
+          }
+        ],
+        "steps": 2000
+      },
+      {
+        "id": "d5-4",
+        "time": "15:30",
+        "title": "飯店 Check-in (龜之井 筑波山)",
+        "category": "accommodation",
+        "searchKeyword": "亀の井ホテル 筑波山",
+        "mapcode": "123 477 064*47",
+        "note": "🛏️ 房型：日式四人房，有晚餐、早餐\n📍 地址：1050-1 Tsukuba, Ibaraki 300-4352\n導航電話：029-866-1111\nMapcode: 123 477 064*47\n避塞車：若遇神社車潮，出示訂房畫面給交管看「Hotel Check-in」可優先通過。\n享受：趁天亮去泡無邊際露天溫泉看夕陽。",
+        "completed": false,
+        "type": "normal",
+        "expenses": [
+          {
+            "id": "1",
+            "label": "住宿費",
+            "amount": 23951,
+            "currency": "NT",
+            "category": "accommodation"
+          }
+        ]
+      },
+      {
+        "id": "d5-5",
+        "time": "16:30",
+        "title": "散步：筑波山神社 (初詣)",
+        "category": "sightseeing",
+        "searchKeyword": "筑波山神社",
+        "mapcode": "123 477 072*85",
+        "note": "交通：從飯店走路 5-10 分鐘。\n特色：傍晚燈籠亮起氣氛佳，避開白天人潮。參拜後可買屋台小吃。",
+        "completed": false,
+        "type": "normal",
+        "steps": 1500
+      },
+      {
+        "id": "d5-6",
+        "time": "18:00",
+        "title": "晚餐：飯店自助餐",
+        "category": "food",
+        "note": "攻略：專攻生魚片、天婦羅、茨城豬肉料理。注意咖哩通常含牛。",
+        "completed": false,
+        "type": "normal"
+      }
+    ]
+  },
+  {
+    "id": "day6",
+    "date": "1/2",
+    "dayOfWeek": "(五)",
+    "weather": "cloudy",
+    "location": "茨城草莓 → 東京阿美橫丁",
+    "steps": 0,
+    "items": [
+      {
+        "id": "d6-1",
+        "time": "10:00",
+        "title": "出發：前往草莓園",
+        "category": "transport",
+        "note": "導航設定：GRANBERRY (0297-44-6615)。\n路況：往常總市方向，路好走。",
+        "completed": false,
+        "type": "normal"
+      },
+      {
+        "id": "d6-2",
+        "time": "11:00",
+        "title": "體驗：GRANBERRY 草莓吃到飽",
+        "category": "food",
+        "searchKeyword": "GRANBERRY 大地",
+        "mapcode": "18 853 864*14",
+        "note": "Mapcode: 18 853 864*14\n特色：高架栽培不髒鞋，40分鐘吃到飽。\n⚠️ 重要：強烈建議預約。若客滿，備案是去下一站 Pasar 守谷買草莓。",
+        "completed": false,
+        "type": "normal",
+        "expenses": [
+          {
+            "id": "1",
+            "label": "體驗費",
+            "amount": 2800,
+            "currency": "JPY",
+            "category": "food"
+          }
+        ],
+        "steps": 500
+      },
+      {
+        "id": "d6-new-1",
+        "time": "12:30",
+        "title": "午餐：Pasar 守谷 (上行)",
+        "category": "food",
+        "note": "位置：常磐道往東京方向休息站。\n不吃牛推薦：大洗志むら(海鮮丼)、鶏三和(親子丼)。",
+        "completed": false,
+        "type": "normal"
+      },
+      {
+        "id": "d6-new-2",
+        "time": "15:30",
+        "title": "抵達東京：民宿下行李 & 停車",
+        "category": "transport",
+        "note": "🛏️ 房型：包棟 沒早餐 有廚房\n📍 地址：2 Chome-4-9 Kitaueno, Taito City 110-0014\n電話：070-8960-5885\nMapcode: 769 494*86\n🅿️ 停車攻略：先下行李。務必找看板寫「入庫後24時間 最大料金」的停車場 (約 ¥2500~3500)。停好後改搭電車。",
+        "completed": false,
+        "type": "normal"
+      },
+      {
+        "id": "d6-3",
+        "time": "16:30",
+        "title": "逛街：上野阿美橫丁",
+        "category": "shopping",
+        "searchKeyword": "アメ横",
+        "note": "氣氛：新年首賣 (初売り) 非常熱鬧。\n必逛：二木的菓子 (伴手禮)、多慶屋 (紫色大樓)、藥妝店。",
+        "completed": false,
+        "type": "normal",
+        "steps": 6000
+      },
+      {
+        "id": "d6-new-3",
+        "time": "19:00",
+        "title": "晚餐：上野炸豬排 (不吃牛首選)",
+        "category": "food",
+        "searchKeyword": "蓬莱屋",
+        "note": "推薦 1：蓬萊屋 (松坂屋後) - 必點腰內肉 (Hire-katsu)。\n推薦 2：井泉 本店 (湯島站) - 筷子能切斷的豬排。",
+        "completed": false,
+        "type": "normal",
+        "expenses": [
+          {
+            "id": "e1",
+            "label": "預估餐費",
+            "amount": 3000,
+            "currency": "JPY",
+            "category": "food"
+          }
+        ]
+      },
+      {
+        "id": "d6-4",
+        "time": "20:30",
+        "title": "民宿休息 (上野悠悠之家)",
+        "category": "accommodation",
+        "searchKeyword": "上野悠悠之家",
+        "mapcode": "769 494*86",
+        "note": "整理戰利品，準備明天回國。",
+        "completed": false,
+        "type": "normal",
+        "expenses": [
+          {
+            "id": "1",
+            "label": "住宿費",
+            "amount": 10115,
+            "currency": "NT",
+            "category": "accommodation"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "day7",
+    "date": "1/3",
+    "dayOfWeek": "(六)",
+    "weather": "sunny",
+    "location": "東京 → 回家",
+    "steps": 0,
+    "items": [
+      {
+        "id": "d7-1",
+        "time": "08:00",
+        "title": "出發：前往成田機場",
+        "category": "transport",
+        "note": "⚠️ 提早出發：避開首都高/機場塞車。最後一天請預留充裕時間。",
+        "completed": false,
+        "type": "normal"
+      },
+      {
+        "id": "d7-2",
+        "time": "10:00",
+        "title": "機場還車 (P1駐車場)",
+        "category": "transport",
+        "note": "還車地點：成田空港P1駐車場 (Sakura Rent A Car)。\n動作：滿油還車、檢查車況。",
+        "mapcode": "137 647 682*14",
+        "completed": false,
+        "type": "normal",
+        "steps": 1000
+      },
+      {
+        "id": "d7-etc",
+        "time": "10:10",
+        "title": "【結算】ETC 與 加油",
+        "category": "transport",
+        "note": "請在此處記錄這七天的過路費與最後加油金額。",
+        "completed": false,
+        "type": "normal",
+        "expenses": [
+          {
+            "id": "etc",
+            "label": "ETC總過路費",
+            "amount": 15000,
+            "currency": "JPY",
+            "category": "transport"
+          },
+          {
+            "id": "gas",
+            "label": "加油費",
+            "amount": 5000,
+            "currency": "JPY",
+            "category": "transport"
+          }
+        ]
+      },
+      {
+        "id": "d7-3",
+        "time": "12:25",
+        "title": "搭機返台 (成田T1)",
+        "category": "transport",
+        "note": "12:25 吉 BR107 NRT T1\n13:00 王方 BR183 NRT T1\n一路順風！✈️",
+        "completed": false,
+        "type": "normal",
+        "steps": 2000
+      }
+    ]
+  }
+];
+// Icons
+const icons = {
+    MapPin:<g><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0Z" strokeLinecap="round" strokeLinejoin="round"/><circle cx="12" cy="10" r="3"/></g>,
+    Plus:<path d="M12 5v14M5 12h14" strokeLinecap="round" strokeLinejoin="round"/>,
+    X:<path d="M18 6 6 18M6 6l12 12" strokeLinecap="round" strokeLinejoin="round"/>,
+    Save:<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" strokeLinecap="round" strokeLinejoin="round"/>,
+    DollarSign:<path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" strokeLinecap="round" strokeLinejoin="round"/>,
+    Utensils:<path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2M7 2v20M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7" strokeLinecap="round" strokeLinejoin="round"/>,
+    ShoppingBag:<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" strokeLinecap="round" strokeLinejoin="round"/>,
+    Camera:<g><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" strokeLinecap="round" strokeLinejoin="round"/><circle cx="12" cy="13" r="4"/></g>,
+    Bed:<path d="M2 4v16M2 8h18a2 2 0 0 1 2 2v10M2 17h20M6 8v9" strokeLinecap="round" strokeLinejoin="round"/>,
+    Car:<g><path d="M14 16H9m10 0h3v-3.15a1 1 0 0 0-.84-.99L16 11l-2.7-3.6a1 1 0 0 0-.8-.4H5.24a2 2 0 0 0-1.8 1.1l-.8 1.63A6 6 0 0 0 2 12.42V16h2" strokeLinecap="round" strokeLinejoin="round"/><circle cx="6.5" cy="16.5" r="2.5"/><circle cx="16.5" cy="16.5" r="2.5"/></g>,
+    MoreVertical:<g><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></g>,
+    Sun:<g><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" strokeLinecap="round" strokeLinejoin="round"/></g>,
+    Cloud:<g><path d="M17.5 19C19.9853 19 22 16.9853 22 14.5C22 12.132 20.177 10.244 17.812 10.035C17.406 6.89 14.762 4.5 11.5 4.5C8.238 4.5 5.594 6.89 5.188 10.035C2.823 10.244 1 12.132 1 14.5C1 16.9853 3.0147 19 5.5 19H17.5Z" strokeWidth="2" stroke="currentColor" fill="none" strokeLinecap="round" strokeLinejoin="round"/></g>,
+    CloudSnow:<g><path d="M20 17.58A5 5 0 0 0 18 8h-1.26A8 8 0 1 0 4 16.25" strokeLinecap="round" strokeLinejoin="round"/><line x1="8" y1="16" x2="8.01" y2="16" strokeWidth="3" strokeLinecap="round"/><line x1="8" y1="20" x2="8.01" y2="20" strokeWidth="3" strokeLinecap="round"/><line x1="12" y1="18" x2="12.01" y2="18" strokeWidth="3" strokeLinecap="round"/><line x1="12" y1="22" x2="12.01" y2="22" strokeWidth="3" strokeLinecap="round"/><line x1="16" y1="16" x2="16.01" y2="16" strokeWidth="3" strokeLinecap="round"/><line x1="16" y1="20" x2="16.01" y2="20" strokeWidth="3" strokeLinecap="round"/></g>,
+    CloudRain:<g><path d="M20 17.58A5 5 0 0 0 18 8h-1.26A8 8 0 1 0 4 16.25" strokeLinecap="round" strokeLinejoin="round"/><line x1="8" y1="16" x2="8" y2="16" strokeWidth="3" strokeLinecap="round"/><line x1="8" y1="20" x2="8" y2="20" strokeWidth="3" strokeLinecap="round"/><line x1="16" y1="16" x2="16" y2="16" strokeWidth="3" strokeLinecap="round"/><line x1="16" y1="20" x2="16" y2="20" strokeWidth="3" strokeLinecap="round"/><line x1="12" y1="18" x2="12" y2="18" strokeWidth="3" strokeLinecap="round"/><line x1="12" y1="22" x2="12" y2="22" strokeWidth="3" strokeLinecap="round"/></g>,
+    Menu:<path d="M4 6h16M4 12h16M4 18h16" strokeLinecap="round" strokeLinejoin="round"/>,
+    Trash2:<path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" strokeLinecap="round" strokeLinejoin="round"/>,
+    ChevronUp:<path d="m18 15-6-6-6 6" strokeLinecap="round" strokeLinejoin="round"/>,
+    CheckCircle2:<g><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4" strokeLinecap="round" strokeLinejoin="round"/></g>,
+    Circle:<circle cx="12" cy="12" r="10"/>,
+    Footprints:<g><path d="M12 14c-3 0-5 2-5 4.5S9.5 22 12 22s5-3.5 5-4.5-2-4.5-5-4.5z" fill="#F472B6"/><ellipse cx="6" cy="9" rx="2" ry="2.5" fill="#F472B6"/><ellipse cx="10" cy="7" rx="2" ry="2.5" fill="#F472B6"/><ellipse cx="14" cy="7" rx="2" ry="2.5" fill="#F472B6"/><ellipse cx="18" cy="9" rx="2" ry="2.5" fill="#F472B6"/></g>,
+    ArrowDown:<path d="M12 5v14M19 12l-7 7-7-7" strokeLinecap="round" strokeLinejoin="round"/>,
+    Search:<g><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3" strokeLinecap="round" strokeLinejoin="round"/></g>,
+    Check:<polyline points="20 6 9 17 4 12" strokeLinecap="round" strokeLinejoin="round"/>,
+    Clock:<g><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14" strokeLinecap="round" strokeLinejoin="round"/></g>,
+    Download:<g><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></g>,
+    Upload:<g><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></g>,
+    Link:<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" strokeLinecap="round" strokeLinejoin="round"/>,
+    ExternalLink:<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6m4-3h6v6m-11 5L21 3" strokeLinecap="round" strokeLinejoin="round"/>,
+    Navigation:<path d="M3 11l19-9-9 19-2-8-8-2z" strokeLinecap="round" strokeLinejoin="round"/>,
+    Route:<g><circle cx="6" cy="19" r="3"/><path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"/><circle cx="18" cy="5" r="3"/></g>,
+    Globe:<g><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></g>,
+    Book:<g><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></g>,
+    Edit:<g><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></g>,
+    Fire:<g><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-5-6.33-5-6.33S1 10.62 1 12a2.5 2.5 0 0 0 2.5 2.5 2.5 2.5 0 0 0 2.5-2.5 2.5 2.5 0 0 0 2.5 2.5z" fill="#F472B6"/><path d="M15.5 17.5a3.5 3.5 0 0 0 5-5c0-1.93-7-8.86-7-8.86s-7 6.93-7 8.86a3.5 3.5 0 0 0 5 5 3.5 3.5 0 0 0 4-3.5 3.5 3.5 0 0 0 3.5 3.5z" fill="#F472B6"/></g>,
+    Wallet:<g><rect width="20" height="14" x="2" y="6" rx="2" strokeLinecap="round" strokeLinejoin="round"/><line x1="2" x2="22" y1="10" y2="10" strokeLinecap="round" strokeLinejoin="round"/><line x1="2" x2="22" y1="14" y2="14" strokeLinecap="round" strokeLinejoin="round"/></g>,
+    Image:<g><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></g>,
+    ChevronLeft:<path d="m15 18-6-6 6-6" strokeLinecap="round" strokeLinejoin="round"/>,
+    ChevronRight:<path d="m9 18 6-6-6-6" strokeLinecap="round" strokeLinejoin="round"/>,
+    Sort:<g><path d="M3 6h18"/><path d="M7 12h10"/><path d="M10 18h4"/></g>,
+    DragHandle:<g><line x1="4" y1="9" x2="20" y2="9" strokeWidth="2.5" strokeLinecap="round"/><line x1="4" y1="15" x2="20" y2="15" strokeWidth="2.5" strokeLinecap="round"/></g>,
+    Snowflake:<g><line x1="12" y1="3" x2="12" y2="21" strokeWidth="2"/><line x1="4.2" y1="7.5" x2="19.8" y2="16.5" strokeWidth="2"/><line x1="4.2" y1="16.5" x2="19.8" y2="7.5" strokeWidth="2"/><path d="M8 3.5 12 8 16 3.5" strokeWidth="1.5" fill="none"/><path d="M8 20.5 12 16 16 20.5" strokeWidth="1.5" fill="none"/><path d="M2.5 11 7 12 2.5 13" strokeWidth="1.5" fill="none"/><path d="M21.5 11 17 12 21.5 13" strokeWidth="1.5" fill="none"/></g>,
+    Sakura:<g><ellipse cx="12" cy="5" rx="4" ry="6" transform="rotate(0 12 12)" fill="currentColor"/><ellipse cx="12" cy="5" rx="4" ry="6" transform="rotate(72 12 12)" fill="currentColor"/><ellipse cx="12" cy="5" rx="4" ry="6" transform="rotate(144 12 12)" fill="currentColor"/><ellipse cx="12" cy="5" rx="4" ry="6" transform="rotate(216 12 12)" fill="currentColor"/><ellipse cx="12" cy="5" rx="4" ry="6" transform="rotate(288 12 12)" fill="currentColor"/><circle cx="12" cy="12" r="5.5" fill="currentColor"/></g>,
+    Map:<path d="M14.1 16.1l-2.4 2.4-2.4-2.4a5 5 0 0 1 4.8 0zM12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7z" strokeLinecap="round" strokeLinejoin="round"/>,
+    Maximize:<path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" strokeLinecap="round" strokeLinejoin="round"/>,
+    Minimize:<path d="M4 14h6v6M20 10h-6V4M14 10l7-7M10 14l-7 7" strokeLinecap="round" strokeLinejoin="round"/>,
+    StickyNote:<g><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></g>,
+    Calendar:<g><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></g>,
+    Copy:<path d="M20 9h-9a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2zM5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" strokeLinecap="round" strokeLinejoin="round"/>,
+    Flag:<g><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" strokeLinecap="round" strokeLinejoin="round"/><line x1="4" x2="4" y1="22" y2="15" strokeLinecap="round" strokeLinejoin="round"/></g>,
+    Timer:<g><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" strokeLinecap="round" strokeLinejoin="round"/><circle cx="12" cy="12" r="7"/><polyline points="12 12 15 15" strokeLinecap="round" strokeLinejoin="round"/></g>,
+    AlertTriangle:<g><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" strokeLinecap="round" strokeLinejoin="round"/><line x1="12" y1="9" x2="12" y2="13" strokeLinecap="round" strokeLinejoin="round"/><line x1="12" y1="17" x2="12.01" y2="17" strokeLinecap="round" strokeLinejoin="round"/></g>
+};
+
+const Icon=({n,s=24,c=""})=>icons[n]?<svg xmlns="http://www.w3.org/2000/svg" width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={c} overflow="visible">{icons[n]}</svg>:null;
+
+// Utils
+const fmtMoney=(v)=>v.toString().replace(/\B(?=(\d{3})+(?!\d))/g,",");
+const Linkify=({text})=>{if(!text)return null;const parts=text.split(/(https?:\/\/[^\s]+)/g);return parts.map((part,i)=>{if(part.match(/^https?:\/\//)){return<a key={i} href={part} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline break-all font-bold" onClick={(e)=>e.stopPropagation()}>{part}</a>}return part})};
+const getWeatherTypeFromCode=(code)=>{if(code===undefined||code===null)return'sunny';if(code<=1)return'sunny';if(code<=3||code===45||code===48)return'cloudy';if(code>=71&&code<=77||code>=85)return'snow';return'rain'};
+const calcDur=(s,e)=>{if(!s||!e)return null;const [sh,sm]=s.split(':').map(Number);const [eh,em]=e.split(':').map(Number);const diff=(eh*60+em)-(sh*60+sm);if(diff<0)return{t:'重疊',bad:true,min:diff};const h=Math.floor(diff/60),m=diff%60;if(h===0&&m===0)return{t:'無空檔',bad:false,min:0};return{t:(h>0?h+'時':'')+(m>0?m+'分':''),bad:false,min:diff}};
+const gMap=(i)=>`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(i.searchKeyword?.trim()||`${i.title} 日本`)}`;
+
+// Components
+const Header = ({ day, idx, totalDays, liveWeather, currentActualSteps, sort, setIdx, setSort, onScrollTop, setStepModal, setTStep }) => {
+    const liveWeatherType = liveWeather ? getWeatherTypeFromCode(liveWeather.code) : null;
+    const weatherIconName = liveWeatherType ? W_ICONS[liveWeatherType] : W_ICONS[day.weather];
+    const weatherColorClass = liveWeatherType ? WEATHER_COLORS[liveWeatherType] : WEATHER_COLORS[day.weather];
+    const weatherAnimClass = (liveWeatherType || day.weather) === 'sunny' ? 'weather-spin' : (liveWeatherType || day.weather) === 'cloudy' ? 'weather-float' : 'weather-pulse';
+    const getWeatherUrl = () => { const zip = WEATHER_LOCATIONS[day.id] || '282-0004'; return `https://tenki.jp/search/?keyword=${encodeURIComponent(zip)}`; };
+
+    return (
+        <div className="bg-gradient-to-r from-rose-500 to-orange-400 shadow-md pt-safe z-30 shrink-0 relative">
+            <div className="h-1.5 w-full bg-black/10 absolute top-0 left-0">
+                <div className="h-full bg-yellow-300 transition-all duration-500" style={{ width: `${((idx + 1) / totalDays) * 100}%` }} />
+            </div>
+            <div className="px-4 py-3 text-white">
+                <div className="flex justify-between items-end">
+                    <div className="flex flex-col justify-center">
+                        <div className="flex items-center gap-2 relative">
+                            <span className="text-base font-bold text-white/80 absolute -top-4 left-0.5">{day.date.startsWith('12') ? '2025' : '2026'}</span>
+                            <h1 className="font-black text-5xl tracking-wide leading-none drop-shadow-md mt-1">{day.date}</h1>
+                            <span className="text-xl font-bold opacity-90 self-end mb-1">{day.dayOfWeek}</span>
+                        </div>
+                        <div className="text-sm font-bold text-white flex items-center gap-1 mt-1 drop-shadow-sm"><Icon n="MapPin" s={14} c="shrink-0 text-yellow-200" /><span className="truncate max-w-[220px] leading-none">{day.location}</span></div>
+                    </div>
+                    <div className="flex flex-col items-end gap-2">
+                        <a href={getWeatherUrl()} target="_blank" rel="noreferrer" className="flex flex-col items-end gap-0.5 bg-white/10 px-2 py-1 rounded-lg backdrop-blur-md border border-white/20 shadow-md cursor-pointer relative active:scale-95 transition-transform">
+                            <div className="flex items-center gap-1">
+                                <div className={`${weatherColorClass} ${weatherAnimClass}`}><Icon n={weatherIconName} s={24} /></div>
+                                <span className="font-bold text-2xl text-white drop-shadow-sm">{liveWeather ? `${liveWeather.temp}°` : '...'}</span>
+                            </div>
+                            <span className="text-[9px] font-bold text-yellow-100 opacity-80">{liveWeather ? '目前天氣' : '讀取中'}</span>
+                        </a>
+                        <button onClick={() => { setTStep(day.steps?.toString() || ''); setStepModal(true); }} className="flex items-center gap-1 text-xs text-rose-600 font-black bg-white px-3 py-1 rounded-full shadow-lg active:scale-95 transition-transform border border-rose-100">
+                            <Icon n="Footprints" s={14} /><span className={`leading-none pt-0.5 ${currentActualSteps > 0 ? 'text-rose-600' : 'text-slate-400'}`}>{currentActualSteps.toLocaleString()}</span>
+                        </button>
+                    </div>
+                </div>
+                <div className={`flex gap-1 hide-scrollbar py-4 px-2 overflow-x-auto mt-1 scroll-smooth-mobile ${sort ? 'opacity-30 pointer-events-none' : ''}`}>
+                    {Array.from({ length: totalDays }).map((_, i) => (
+                        <button key={i} onClick={() => { setIdx(i); setSort(false); onScrollTop(); }} className={`flex-shrink-0 rounded-full transition-all shadow-none tap-transparent sakura-btn-container`}>
+                            {idx === i ? (
+                                <div className="sakura-icon-active text-rose-200">
+                                    <Icon n="Sakura" s={54} c="w-full h-full" />
+                                </div>
+                            ) : (
+                                <div className="sakura-icon-inactive text-white">
+                                    <Icon n="Sakura" s={54} c="w-full h-full" />
+                                </div>
+                            )}
+                            <span className={idx === i ? 'sakura-text-active' : 'sakura-text-inactive'}>D{i + 1}</span>
+                        </button>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const ItineraryItem = ({ item, nextItem, sort, dayDate, isExpanded, onToggle, onToggleNote, onEdit, startLongPress, endLongPress, copyMapcode, now }) => {
+    const cat = CATS[item.category] || CATS.other;
+    const dur = (!sort && nextItem && nextItem.type !== 'memo') ? calcDur(item.time, nextItem.time) : null;
+    const totalItemJPY = (item.expenses || []).filter(e => e.currency !== 'NT').reduce((s, x) => s + Number(x.amount || 0), 0);
+    const totalItemNT = (item.expenses || []).filter(e => e.currency === 'NT').reduce((s, x) => s + Number(x.amount || 0), 0);
+    const showDriveAlert = dur && item.estDriveTime && dur.min < item.estDriveTime;
+
+    const isCurrentItem = () => {
+        if (!item.time) return false;
+        const [m, d] = dayDate.split('/').map(Number);
+        const year = m === 12 ? 2025 : 2026;
+        const itemDate = new Date(year, m - 1, d);
+        if (now.getFullYear() !== itemDate.getFullYear() || now.getMonth() !== itemDate.getMonth() || now.getDate() !== itemDate.getDate()) return false;
+        const [h, min] = item.time.split(':').map(Number);
+        const startTime = h * 60 + min;
+        const nowTime = now.getHours() * 60 + now.getMinutes();
+        let endTime = 24 * 60;
+        if (nextItem && nextItem.time) {
+            const [nh, nm] = nextItem.time.split(':').map(Number);
+            endTime = nh * 60 + nm;
+        } else {
+            endTime = startTime + 90;
+        }
+        return nowTime >= startTime && nowTime < endTime;
+    };
+    
+    const isCurrent = !sort && isCurrentItem();
+
+    return (
+        <div className={`relative ${sort ? 'mb-3 px-4' : 'mb-8 pl-16 pr-6'}`} onTouchStart={startLongPress} onTouchEnd={endLongPress} onMouseDown={startLongPress} onMouseUp={endLongPress} onMouseLeave={endLongPress}>
+            {!sort && (<>
+                <div className="absolute right-0 top-0 z-20">
+                    <button onClick={(e) => { e.stopPropagation(); onEdit(); }} className="w-9 h-9 bg-blue-50 rounded-full flex items-center justify-center shadow-sm border border-blue-100 text-blue-500 active:scale-90 transition-transform"><Icon n="Edit" s={18} /></button>
+                </div>
+                <div onClick={(e) => { e.stopPropagation(); onToggle(); }} className={`absolute left-0 top-0 w-12 h-12 rounded-full border-[4px] border-[#fff7ed] z-20 flex items-center justify-center transition-all shadow-md cursor-pointer ${item.completed ? 'bg-emerald-500 text-white scale-90' : 'bg-white text-slate-400 ' + cat.c.replace('bg-', 'text-').replace('text-', 'border-')} ring-1 ring-slate-100 ${isCurrent ? 'ring-4 ring-rose-300' : ''}`}>
+                    <div className={`w-full h-full rounded-full flex items-center justify-center ${!item.completed && cat.c}`}>{item.completed ? <Icon n="Check" s={24} /> : <Icon n={cat.i} s={20} />}</div>
+                </div>
+                {dur && <div className="absolute left-[6px] -bottom-6 z-10 flex flex-col items-center w-10 pointer-events-none"><div className="bg-white border border-slate-200 rounded-full px-1.5 py-0.5 text-[9px] text-slate-400 font-bold shadow-sm whitespace-nowrap flex items-center gap-1"><Icon n="Clock" s={10} />{dur.t}</div></div>}
+            </>)}
+            <div onClick={() => !sort && onToggleNote()} className={`bg-white rounded-2xl border border-slate-100 relative z-10 transition-all tap-transparent ${sort ? 'p-0 border-blue-400 border-2 shadow-lg flex items-stretch bg-blue-50/20 overflow-hidden' : `p-4 hover:shadow-lg active:scale-[0.98] card-shadow ${isCurrent ? 'current-item-glow' : ''} ${item.completed ? 'bg-slate-50/80 grayscale-[0.5]' : ''}`}`}>
+                {sort ? (<><div className="drag-handle w-14 bg-slate-100 flex items-center justify-center flex-shrink-0 border-r border-slate-200 cursor-grab active:cursor-grabbing touch-none"><Icon n="DragHandle" s={24} c="text-slate-400" /></div><div className="flex-1 p-3 pointer-events-none select-none flex flex-col justify-center min-w-0"><div className="text-xs font-bold text-blue-600 mb-0.5">{item.time}</div><div className="font-bold text-slate-800 text-base line-clamp-1">{item.title}</div></div></>) : (
+                    <div className="relative flex flex-col gap-2">
+                        <div className="flex justify-between items-start pr-10">
+                            <div className="flex items-baseline gap-2">
+                                <span className="text-xl font-black text-slate-800 font-mono tracking-tight">{item.time}</span>
+                                <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${cat.c.replace('text-', 'border-').replace('100', '200')}`}>{cat.l}</span>
+                                {isCurrent && <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-rose-500 text-white animate-pulse">進行中</span>}
+                            </div>
+                        </div>
+                        <h3 className={`font-black text-lg leading-snug font-rounded flex items-start gap-1 ${item.completed ? 'text-slate-400 line-through decoration-slate-300' : 'text-slate-800'}`}>{item.title}</h3>
+                        {showDriveAlert && (<div className="flex items-start gap-2 bg-red-50 text-red-600 p-2 rounded-lg text-xs font-bold border border-red-100"><Icon n="AlertTriangle" s={16} c="shrink-0 mt-0.5" /><span>趕車注意：預估車程 {item.estDriveTime} 分，但空檔僅 {dur.min} 分！</span></div>)}
+                        <div className={`note-expand ${isExpanded || (item.note && isExpanded) ? 'open' : ''} ${!isExpanded && item.note ? 'max-h-0 opacity-0' : ''}`}>{item.note && (<div onClick={(e) => { e.stopPropagation(); onToggleNote(); }} className="cursor-pointer text-sm font-medium text-slate-600 bg-yellow-50 p-3 rounded-lg border-l-4 border-yellow-400 leading-relaxed whitespace-pre-line active:bg-yellow-100 transition-colors"><Linkify text={item.note} /></div>)}</div>
+                        {!isExpanded && item.note && <div onClick={() => onToggleNote()} className="text-[10px] text-slate-400 text-center cursor-pointer hover:text-blue-500 font-bold">📝 點擊查看備註...</div>}
+                        <div className="mt-2 pt-2 border-t border-slate-50 flex justify-between items-center">
+                            <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] font-bold text-slate-500 items-center">
+                                {(totalItemJPY > 0 || totalItemNT > 0) && (<div className="flex items-center gap-1 text-slate-600"><Icon n="DollarSign" s={12} /><span>{totalItemJPY > 0 ? `¥${fmtMoney(totalItemJPY)}` : ''} {totalItemNT > 0 ? `NT${fmtMoney(totalItemNT)}` : ''}</span></div>)}
+                                {Number(item.steps) > 0 && (<div className="flex items-center gap-1 text-pink-500"><Icon n="Footprints" s={12} /><span>{Number(item.steps).toLocaleString()}</span></div>)}
+                                {item.mapcode && (<div onClick={(e) => { e.stopPropagation(); copyMapcode(item.mapcode); }} className="flex items-center gap-1 bg-slate-100 px-1.5 py-0.5 rounded text-slate-500 font-mono active:bg-slate-200 cursor-pointer border border-slate-200"><Icon n="Copy" s={10} /> MC: {item.mapcode}</div>)}
+                            </div>
+                            <a href={gMap(item)} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()} className="w-8 h-8 flex items-center justify-center bg-blue-50 text-blue-500 rounded-full active:scale-90 transition-transform shadow-sm border border-blue-100"><Icon n="Navigation" s={16} /></a>
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
+
+const MemoItem = ({ item, sort, onToggleNote, onEdit, startLongPress, endLongPress, setViewImgIdx }) => {
+    return (
+        <div className={`relative ${sort ? 'mb-3 px-4' : 'mb-4 pl-12 pr-6'}`} onTouchStart={startLongPress} onTouchEnd={endLongPress} onMouseDown={startLongPress} onMouseUp={endLongPress} onMouseLeave={endLongPress}>
+            {!sort && (<>
+                <div className="absolute right-0 top-0 z-20"><button onClick={(e) => { e.stopPropagation(); onEdit(); }} className="w-8 h-8 bg-yellow-50 rounded-full flex items-center justify-center shadow-sm border border-yellow-200 text-yellow-600 active:scale-90 transition-transform"><Icon n="Edit" s={14} /></button></div>
+                <div className="absolute left-1 top-4 w-8 h-8 rounded-full z-20 flex items-center justify-center bg-yellow-100 text-yellow-600 border-2 border-[#fff7ed] shadow-sm"><Icon n="StickyNote" s={14} /></div>
+            </>)}
+            <div onClick={() => !sort && onToggleNote()} className={`bg-yellow-50 rounded-xl border border-yellow-200 relative z-10 transition-all tap-transparent ${sort ? 'p-2 border-yellow-400 border-2 shadow-lg' : 'p-3 card-shadow'}`}>
+                {sort ? (<div className="flex items-center gap-3"><div className="drag-handle w-8 flex items-center justify-center flex-shrink-0 text-yellow-400"><Icon n="DragHandle" s={20} /></div><div className="font-bold text-slate-800 text-sm line-clamp-1">{item.title}</div></div>) : (
+                    <div className="flex flex-col gap-2"><h3 className="font-bold text-slate-800 text-base leading-snug">{item.title}</h3>{item.note && <div className="text-sm text-slate-600 whitespace-pre-wrap leading-relaxed"><Linkify text={item.note} /></div>}{item.images && item.images.length > 0 && (<div className="memo-grid mt-2">{item.images.map((img, idx) => (<div key={idx} className="aspect-square rounded-lg overflow-hidden border border-yellow-100 bg-white" onClick={(e) => { e.stopPropagation(); onEdit(); setViewImgIdx(idx); }}><img src={typeof img === 'string' ? img : img.url} className="w-full h-full object-cover" alt="memo" /></div>))}</div>)}</div>
+                )}
+            </div>
+        </div>
+    );
+};
+
+const Footer = ({ sort, footerExpanded, setFooterExpanded, cancelSort, finishSort, totalNT, totalJPY, setNotebookModal, setFilterCategory, setLedgerModal, addMenuOpen, setAddMenuOpen, onAddItem, menuOpen, setMenuOpen, handleScreenshot, exportData, fileRef }) => {
+    return (
+        <div className={`fixed bottom-0 w-full z-50 transition-transform duration-300 ${(footerExpanded || sort) ? 'translate-y-0' : 'translate-y-full'}`}>
+            {!sort && (<div onClick={() => setFooterExpanded(!footerExpanded)} className="absolute left-1/2 -translate-x-1/2 -top-6 w-12 h-6 bg-white/90 backdrop-blur-sm rounded-t-full shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] border-t border-x border-slate-200 flex items-center justify-center cursor-pointer"><div className={`text-slate-400 transition-transform duration-300 ${footerExpanded ? 'rotate-180' : ''}`}><Icon n="ChevronUp" s={20} /></div></div>)}
+            {sort ? (
+                <div className="bg-white/90 backdrop-blur-md border-t border-slate-200 shadow-[0_-4px_20px_rgba(0,0,0,0.15)] pb-safe p-4 flex justify-between gap-4 animate-fade-in">
+                    <button onClick={cancelSort} className="flex-1 bg-slate-100 text-slate-600 font-bold py-3 rounded-2xl flex items-center justify-center gap-2 active:scale-95"><Icon n="X" s={20} /> 取消</button>
+                    <button onClick={finishSort} className="flex-[2] bg-blue-500 text-white font-bold py-3 rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-blue-200 active:scale-95"><Icon n="Check" s={20} /> 完成排序</button>
+                </div>
+            ) : (
+                <div className="bg-white border-t border-slate-200 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] pb-safe">
+                    <div className="px-4 py-3 flex items-center justify-between gap-4">
+                        <div className="flex flex-col min-w-0">
+                            <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">行程總支出</div>
+                            <div className="flex flex-wrap items-baseline gap-x-2">
+                                <span className="font-black text-slate-800 text-xl">NT${fmtMoney(totalNT)}</span>
+                                <span className="font-bold text-slate-500 text-sm">¥{fmtMoney(totalJPY)}</span>
+                            </div>
+                            <div className="text-[10px] text-slate-400 font-bold mt-0.5">≈ 總計 NT$ {fmtMoney(Math.round(totalNT + (totalJPY * EXCHANGE_RATE)))}</div>
+                        </div>
+                        <div className="flex gap-2 shrink-0">
+                            <button onClick={() => setNotebookModal(true)} className="p-3 bg-yellow-50 text-yellow-600 rounded-xl active:scale-90 transition-transform mr-2"><Icon n="Book" s={20} /></button>
+                            <button onClick={() => { setFilterCategory(null); setLedgerModal(true) }} className="p-3 bg-blue-50 text-blue-600 rounded-xl active:scale-90 transition-transform"><Icon n="Wallet" s={20} /></button>
+                            <div className="relative">
+                                <button onClick={() => setAddMenuOpen(!addMenuOpen)} className="p-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl shadow-md active:scale-90 transition-transform"><Icon n="Plus" s={20} /></button>
+                                {addMenuOpen && (<><div className="fixed inset-0 z-40" onClick={() => setAddMenuOpen(false)}></div><div className="absolute bottom-full right-0 mb-2 w-40 bg-white rounded-xl shadow-xl border border-slate-100 p-1 z-50 animate-fade-in flex flex-col gap-1"><button onClick={() => { setAddMenuOpen(false); onAddItem('normal'); }} className="text-left px-4 py-3 text-sm font-bold text-slate-600 hover:bg-slate-50 rounded-lg flex items-center gap-2"><span className="text-blue-500"><Icon n="MapPin" s={18} /></span> 新增行程</button><button onClick={() => { setAddMenuOpen(false); onAddItem('memo'); }} className="text-left px-4 py-3 text-sm font-bold text-slate-600 hover:bg-slate-50 rounded-lg flex items-center gap-2"><span className="text-yellow-500"><Icon n="StickyNote" s={18} /></span> 新增便條</button></div></>)}
+                            </div>
+                            <div className="w-[1px] h-8 bg-slate-100 mx-1"></div>
+                            <div className="relative group">
+                                <button className={`p-3 rounded-xl active:scale-90 transition-transform ${menuOpen ? 'bg-slate-200 text-slate-800' : 'bg-slate-50 text-slate-500'}`} onClick={() => setMenuOpen(!menuOpen)}><Icon n="Menu" s={20} /></button>
+                                {menuOpen && (<><div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)}></div><div className="absolute bottom-full right-0 mb-2 w-36 bg-white rounded-xl shadow-2xl border border-slate-100 p-1 z-50 animate-fade-in"><button onClick={handleScreenshot} className="w-full text-left px-4 py-3 text-sm font-bold text-slate-600 hover:bg-slate-50 rounded-lg flex items-center gap-2"><Icon n="Camera" s={16} /> 截圖分享</button><button onClick={() => { exportData(); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm font-bold text-slate-600 hover:bg-slate-50 rounded-lg flex items-center gap-2"><Icon n="Download" s={16} /> 備份資料</button><button onClick={() => { fileRef.current?.click(); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm font-bold text-slate-600 hover:bg-slate-50 rounded-lg flex items-center gap-2"><Icon n="Upload" s={16} /> 讀取備份</button></div></>)}
+                            </div>
+                        </div>
+                    </div>
+                    <div className="text-[10px] text-slate-300 mt-2 text-center pb-1">V47 Single File</div>
+                </div>
+            )}
+        </div>
+    );
+};
+
+const TimeScroll = ({ val, setVal }) => {
+    const [h, m] = val ? val.split(':') : ['12', '00'];
+    return (<div className="flex gap-1 items-center bg-slate-50 border-2 border-slate-100 rounded-2xl p-1 h-[60px]"><select value={h} onChange={e => setVal(`${e.target.value}:${m}`)} className="appearance-none bg-transparent text-2xl font-black text-center w-full outline-none text-slate-700">{Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0')).map(v => <option key={v} value={v}>{v}</option>)}</select><span className="text-slate-300 font-black">:</span><select value={m} onChange={e => setVal(`${h}:${e.target.value}`)} className="appearance-none bg-transparent text-2xl font-black text-center w-full outline-none text-slate-700">{Array.from({ length: 12 }, (_, i) => (i * 5).toString().padStart(2, '0')).map(v => <option key={v} value={v}>{v}</option>)}</select></div>);
+};
+
+const EditModal = ({ editItem, setEditItem, data, onClose, onSave, onDelete, setViewImgIdx }) => {
+    const imgInputRef = useRef(null);
+    const urlInputRef = useRef(null);
+
+    const handleImageUpload = (e) => {
+        const file = e.target.files?.[0]; if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas'); let width = img.width; let height = img.height; const MAX_SIZE = 800;
+                if (width > height && width > MAX_SIZE) { height *= MAX_SIZE / width; width = MAX_SIZE; } else if (height > MAX_SIZE) { width *= MAX_SIZE / height; height = MAX_SIZE; }
+                canvas.width = width; canvas.height = height; const ctx = canvas.getContext('2d');
+                if(ctx){
+                   ctx.drawImage(img, 0, 0, width, height);
+                   const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                   setEditItem({ ...editItem, images: [...(editItem.images || []), { url: dataUrl, text: '' }] });
+                }
+            }
+            img.src = event.target?.result;
+        }
+        reader.readAsDataURL(file);
+    };
+
+    const handleAddUrl = () => {
+        if (urlInputRef.current && urlInputRef.current.value) {
+            const val = urlInputRef.current.value.trim();
+            if (val) {
+                setEditItem({ ...editItem, images: [...(editItem.images || []), { url: val, text: '' }] });
+                urlInputRef.current.value = '';
+            }
+        }
+    };
+
+    const handlePaste = (e) => {
+        const items = e.clipboardData.items;
+        for (let i = 0; i < items.length; i++) {
+            if (items[i].type.indexOf("image") !== -1) {
+                const blob = items[i].getAsFile();
+                if(blob) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        const img = new Image();
+                        img.onload = () => {
+                            const canvas = document.createElement('canvas'); let width = img.width; let height = img.height; const MAX_SIZE = 800;
+                            if (width > height && width > MAX_SIZE) { height *= MAX_SIZE / width; width = MAX_SIZE; } else if (height > MAX_SIZE) { width *= MAX_SIZE / height; height = MAX_SIZE; }
+                            canvas.width = width; canvas.height = height; const ctx = canvas.getContext('2d');
+                            if(ctx){
+                                ctx.drawImage(img, 0, 0, width, height);
+                                const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                                setEditItem({ ...editItem, images: [...(editItem.images || []), { url: dataUrl, text: '' }] });
+                            }
+                        };
+                        img.src = event.target?.result;
+                    };
+                    reader.readAsDataURL(blob);
+                    e.preventDefault();
+                    return;
+                }
+            }
+        }
+    };
+
+    const moveImg = (idx, dir) => {
+        const newImgs = [...(editItem.images || [])];
+        const target = idx + dir;
+        if (target < 0 || target >= newImgs.length) return;
+        [newImgs[idx], newImgs[target]] = [newImgs[target], newImgs[idx]];
+        setEditItem({ ...editItem, images: newImgs });
+    };
+
+    const addExpense = () => { setEditItem({ ...editItem, expenses: [...(editItem.expenses || []), { id: Date.now(), label: '', amount: '', currency: 'JPY', category: editItem.category || 'other' }] }) };
+    const updateExpense = (idx, field, val) => { const newExps = [...(editItem.expenses || [])]; newExps[idx] = {...newExps[idx], [field]: val}; setEditItem({ ...editItem, expenses: newExps }) };
+    const removeExpense = (idx) => { const newExps = (editItem.expenses || []).filter((_, i) => i !== idx); setEditItem({ ...editItem, expenses: newExps }) };
+
+    return (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[100] flex items-end sm:items-center justify-center animate-fade-in">
+            <div className="bg-white w-full sm:w-[95%] max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[95vh]">
+                <div className={`px-6 py-5 border-b flex justify-between items-center rounded-t-3xl ${editItem.type === 'memo' ? 'bg-yellow-50' : 'bg-slate-50'}`}>
+                    <h2 className={`font-bold text-2xl font-rounded ${editItem.type === 'memo' ? 'text-yellow-600' : 'text-slate-800'}`}>{editItem.id && data.some(d => d.items.some(i => i.id === editItem.id)) ? (editItem.type === 'memo' ? '編輯便條' : '編輯行程') : (editItem.type === 'memo' ? '新增便條' : '新增行程')}</h2>
+                    <button onClick={onClose} className="p-3 bg-white rounded-full text-slate-500 hover:bg-slate-100 transition-colors shadow-sm"><Icon n="X" s={28} /></button>
+                </div>
+
+                <div className="p-6 overflow-y-auto space-y-6" onPaste={handlePaste}>
+                    <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex gap-4">
+                        <div className="flex-1"><label className="text-xs font-bold text-slate-500 block mb-1">日期 (可跨日移動)</label><select value={editItem.dayId} onChange={e => setEditItem({ ...editItem, dayId: e.target.value })} className="w-full bg-white p-2 rounded-xl font-bold text-slate-700 outline-none border border-slate-200 text-sm">{data.map((d, i) => (<option key={d.id} value={d.id}>D{i + 1} ({d.date})</option>))}</select></div>
+                        {editItem.type === 'normal' && (<div className="w-24"><label className="text-xs font-bold text-slate-500 block mb-1">時間</label><input type="time" value={editItem.time || ''} onChange={e => setEditItem({ ...editItem, time: e.target.value })} className="w-full bg-white p-2 rounded-xl font-bold text-slate-700 outline-none border border-slate-200 text-sm text-center" /></div>)}
+                    </div>
+                    {editItem.type === 'normal' && (<div className="flex gap-2 items-end"><div className="w-[30%] space-y-1"><label className="text-xs font-bold text-slate-500 block">時間</label><TimeScroll val={editItem.time || ''} setVal={(v) => setEditItem({ ...editItem, time: v })} /></div><div className="w-[70%] space-y-1"><label className="text-xs font-bold text-slate-500 block">標題</label><input type="text" value={editItem.title} onChange={e => setEditItem({ ...editItem, title: e.target.value })} className="w-full h-[60px] bg-white border-2 border-slate-200 rounded-2xl px-4 font-bold text-xl outline-none focus:border-blue-400 transition-colors placeholder:text-slate-300" placeholder="行程名稱..." /></div></div>)}
+                    {editItem.type === 'memo' && (<input type="text" value={editItem.title} onChange={e => setEditItem({ ...editItem, title: e.target.value })} className="w-full h-[60px] bg-white border-2 border-yellow-200 rounded-2xl px-4 font-bold text-2xl outline-none focus:border-yellow-400 transition-colors placeholder:text-slate-300" placeholder="便條標題..." />)}
+                    
+                    {/* Memo Layout */}
+                    {editItem.type === 'memo' ? (<><textarea value={editItem.note || ''} onChange={e => setEditItem({ ...editItem, note: e.target.value })} placeholder="輸入詳細內容... (支援直接貼上圖片)" className="w-full bg-yellow-50 p-4 rounded-2xl text-base border-2 border-yellow-100 outline-none focus:border-yellow-400 h-40" /><div><div className="text-sm font-bold text-slate-500 mb-2">圖片 (上傳/貼連結)</div><div className="flex gap-2 mb-2"><input ref={urlInputRef} type="text" placeholder="貼上圖片網址..." className="flex-1 bg-white px-3 py-2 rounded-xl text-sm border border-slate-200 outline-none focus:border-yellow-400" /><button onClick={handleAddUrl} className="bg-yellow-100 text-yellow-600 p-2.5 rounded-xl border border-yellow-200 active:scale-95 flex items-center justify-center"><Icon n="Plus" s={20} /></button><button onClick={() => imgInputRef.current?.click()} className="bg-slate-200 text-slate-600 px-3 py-2 rounded-xl text-sm font-bold active:scale-95 flex items-center gap-1"><Icon n="Image" s={18} /></button><input type="file" ref={imgInputRef} className="hidden" accept="image/*" onChange={handleImageUpload} /></div><div className="grid grid-cols-3 gap-2">{(editItem.images || []).map((imgItem, i) => { const imgSrc = typeof imgItem === 'string' ? imgItem : imgItem.url; return (<div key={i} className="relative aspect-square rounded-xl overflow-hidden border-2 border-slate-200 bg-white group shadow-sm"><img src={imgSrc} onClick={() => setViewImgIdx(i)} className="w-full h-full object-cover cursor-zoom-in" /><div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-1 z-20 pointer-events-none"><button onClick={(e) => { e.stopPropagation(); setEditItem({ ...editItem, images: (editItem.images || []).filter((_, idx) => idx !== i) }) }} className="self-end text-white bg-red-500/80 rounded-full p-1 hover:bg-red-600 pointer-events-auto"><Icon n="X" s={14} /></button><div className="flex justify-between w-full pointer-events-auto">{i > 0 && <button onClick={(e) => { e.stopPropagation(); moveImg(i, -1) }} className="text-white bg-slate-500/80 rounded-full p-1 hover:bg-slate-600"><Icon n="ChevronLeft" s={14} /></button>}{i < (editItem.images || []).length - 1 && <button onClick={(e) => { e.stopPropagation(); moveImg(i, 1) }} className="text-white bg-slate-500/80 rounded-full p-1 ml-auto hover:bg-slate-600"><Icon n="ChevronRight" s={14} /></button>}</div></div></div>); })}</div></div></>) : (
+                        <>
+                            {/* Normal Layout */}
+                            <div><label className="text-base font-bold text-slate-500 mb-2 block">分類</label><div className="grid grid-cols-6 gap-1">{Object.entries(CATS).filter(([k]) => k !== 'memo').map(([k, v]) => (<button key={k} onClick={() => setEditItem({ ...editItem, category: k })} className={`h-14 rounded-lg font-bold border-2 transition-all flex flex-col items-center justify-center gap-0 ${editItem.category === k ? 'bg-blue-500 text-white border-blue-500 shadow-md scale-105' : 'bg-white text-slate-500 border-slate-200'}`}><Icon n={v.i} s={20} /> <span className="text-[10px]">{v.l}</span></button>))}</div></div>
+                            <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100"><div className="flex justify-between items-center mb-3"><label className="text-sm font-bold text-slate-500">消費明細</label><button onClick={addExpense} className="text-xs bg-blue-100 text-blue-600 px-3 py-1.5 rounded-full font-bold hover:bg-blue-200 transition-colors">+ 新增</button></div>{(!editItem.expenses || editItem.expenses.length === 0) && <div className="text-center text-slate-400 text-sm py-2">尚無消費紀錄</div>}<div className="space-y-2">{(editItem.expenses || []).map((ex, idx) => (<div key={ex.id} className="flex gap-2 items-center flex-wrap sm:flex-nowrap bg-white p-2 rounded-xl border border-slate-100 shadow-sm"><div className="w-full sm:w-auto flex-1 min-w-0"><input type="text" placeholder="項目" value={ex.label} onChange={e => updateExpense(idx, 'label', e.target.value)} className="w-full text-sm font-bold outline-none bg-transparent placeholder:text-slate-300" /></div><div className="flex items-center gap-2 w-full sm:w-auto justify-end mt-2 sm:mt-0"><select value={ex.category || 'other'} onChange={e => updateExpense(idx, 'category', e.target.value)} className="text-xs bg-slate-100 rounded-lg px-2 py-1 outline-none border-0 text-slate-600 max-w-[80px]">{Object.entries(CATS).filter(([k]) => k !== 'memo').map(([k, v]) => <option key={k} value={k}>{v.l}</option>)}</select><div className="flex items-center bg-slate-50 rounded-lg px-2 py-1"><select value={ex.currency} onChange={e => updateExpense(idx, 'currency', e.target.value)} className="bg-transparent text-xs font-bold outline-none text-slate-500 mr-1"><option value="JPY">¥</option><option value="NT">NT</option></select><input type="number" placeholder="0" value={ex.amount} onChange={e => updateExpense(idx, 'amount', e.target.value)} className="w-24 text-sm font-mono font-bold outline-none bg-transparent text-right" /></div><button onClick={() => removeExpense(idx)} className="text-slate-300 hover:text-red-500 transition-colors"><Icon n="X" s={16} /></button></div></div>))}</div><div className="mt-3 flex justify-end gap-4 text-sm font-bold text-slate-600 border-t border-slate-200 pt-2"><span>¥ {fmtMoney((editItem.expenses || []).filter(e => e.currency !== 'NT').reduce((s, x) => s + Number(x.amount || 0), 0))}</span><span>NT {fmtMoney((editItem.expenses || []).filter(e => e.currency === 'NT').reduce((s, x) => s + Number(x.amount || 0), 0))}</span></div></div>
+                            <div className="space-y-2"><label className="text-sm font-bold text-slate-500 flex items-center gap-1"><Icon n="Timer" s={16} c="text-slate-500" /> 自駕預估車程 (分)</label><input type="number" value={editItem.estDriveTime || ''} onChange={e => setEditItem({ ...editItem, estDriveTime: Number(e.target.value) })} placeholder="例如: 90" className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-3 font-mono text-base outline-none focus:border-blue-400" /></div>
+                            <div className="space-y-2"><label className="text-sm font-bold text-slate-500 flex items-center gap-1"><Icon n="Footprints" s={16} c="text-blue-500" /> 步數 (選填)</label><input type="number" value={editItem.steps || ''} onChange={e => setEditItem({ ...editItem, steps: e.target.value })} placeholder="例如: 5000" className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-3 font-mono text-base outline-none focus:border-blue-400" /></div>
+                            <div className="space-y-2"><label className="text-sm font-bold text-slate-500">備註</label><textarea value={editItem.note || ''} onChange={e => setEditItem({ ...editItem, note: e.target.value })} placeholder="輸入備註..." className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-3 text-base h-24 outline-none focus:border-blue-400" /></div>
+                            <div className="bg-slate-50 p-4 rounded-2xl mb-4 border border-slate-100"><div className="space-y-3"><div><label className="text-xs text-slate-400 block mb-1">車載導航 Mapcode</label><div className="flex gap-2"><input type="text" value={editItem.mapcode || ''} onChange={e => setEditItem({ ...editItem, mapcode: e.target.value })} placeholder="Mapcode" className="flex-1 bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-blue-400 font-mono" /><a href="https://japanmapcode.com/zh-TW" target="_blank" rel="noopener noreferrer" className="p-3 bg-white text-slate-500 border border-slate-200 rounded-2xl hover:bg-slate-50 active:scale-95 flex items-center justify-center"><Icon n="Globe" s={20} /></a></div></div><div><label className="text-xs text-slate-400 block mb-1">Google Maps 搜尋關鍵字</label><div className="flex gap-2"><input type="text" value={editItem.searchKeyword || ''} onChange={e => setEditItem({ ...editItem, searchKeyword: e.target.value })} placeholder="例如: 晴空塔" className="flex-1 bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-blue-400" /><a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(editItem.searchKeyword || editItem.title)}`} target="_blank" rel="noreferrer" className="p-3 bg-white text-slate-500 border border-slate-200 rounded-2xl hover:bg-slate-50 active:scale-95 flex items-center justify-center"><Icon n="Search" s={20} /></a></div></div></div></div>
+                        </>
+                    )}
+                </div>
+
+                <div className="p-5 border-t flex gap-4 bg-white pb-safe">
+                    <button onClick={onDelete} className="p-4 rounded-2xl bg-red-50 text-red-500 border-2 border-red-100 hover:bg-red-100 transition-colors"><Icon n="Trash2" s={24} /></button>
+                    <button onClick={onSave} className={`flex-1 text-white rounded-2xl font-bold text-lg shadow-lg active:scale-95 transition-transform py-4 flex justify-center items-center gap-2 ${editItem.type === 'memo' ? 'bg-yellow-500 shadow-yellow-200' : 'bg-gradient-to-r from-blue-500 to-blue-600 shadow-blue-200'}`}><Icon n="Save" s={20} /> 儲存</button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const LedgerModal = ({ data, onClose, filterCategory, setFilterCategory, onItemClick }) => {
+    let totalNT = 0, totalJPY = 0;
+    let expensesByCategory = {};
+    let allExpenses = [];
+
+    const getSortDate = (dStr) => {
+        const [m, d] = dStr.split('/').map(Number);
+        const year = m === 12 ? 2025 : 2026;
+        return new Date(year, m - 1, d).getTime()
+    };
+
+    data.forEach(d => d.items.forEach(i => {
+        (i.expenses || []).forEach(ex => {
+            const amount = Number(ex.amount || 0);
+            if (ex.currency === 'NT') totalNT += amount; else totalJPY += amount;
+            const cat = ex.category || i.category || 'other';
+            if (!expensesByCategory[cat]) expensesByCategory[cat] = { nt: 0, jpy: 0, label: CATS[cat]?.l || '其他', color: CATS[cat]?.c || 'bg-gray-100 text-gray-600' };
+            if (ex.currency === 'NT') expensesByCategory[cat].nt += amount; else expensesByCategory[cat].jpy += amount;
+            allExpenses.push({ date: d.date, time: i.time, title: i.title, label: ex.label, amount: amount, currency: ex.currency, category: cat, dayId: d.id, itemId: i.id });
+        });
+    }));
+    allExpenses.sort((a, b) => { const dateA = getSortDate(a.date); const dateB = getSortDate(b.date); if (dateA !== dateB) return dateA - dateB; return (a.time || '').localeCompare(b.time || '') });
+    const displayedExpenses = filterCategory ? allExpenses.filter(ex => ex.category === filterCategory) : allExpenses;
+
+    return (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[100] flex items-end sm:items-center justify-center animate-fade-in">
+            <div className="bg-white w-full sm:w-[95%] max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[85vh] h-[85vh]">
+                <div className="px-6 py-5 border-b flex justify-between items-center bg-blue-50 rounded-t-3xl"><h2 className="font-bold text-xl text-blue-600 flex items-center gap-2"><Icon n="Wallet" s={24} /> 旅遊帳本</h2><button onClick={onClose} className="p-2 bg-white rounded-full shadow-sm text-slate-500"><Icon n="X" s={20} /></button></div>
+                <div className="p-6 overflow-y-auto flex-1 space-y-6">
+                    <div className="grid grid-cols-1 gap-4">
+                        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-4 text-white shadow-lg"><div className="text-xs font-bold opacity-80 mb-1">總支出 (NT)</div><div className="text-2xl font-black font-mono">NT${fmtMoney(totalNT)}</div></div>
+                        <div className="bg-gradient-to-br from-orange-400 to-orange-500 rounded-2xl p-4 text-white shadow-lg"><div className="text-xs font-bold opacity-80 mb-1">總支出 (JPY)</div><div className="text-2xl font-black font-mono">¥{fmtMoney(totalJPY)}</div></div>
+                        <div className="bg-slate-100 rounded-2xl p-3 text-center text-slate-500 font-bold text-sm">參考總額：約 NT$ {fmtMoney(Math.round(totalNT + totalJPY * EXCHANGE_RATE))}</div>
+                    </div>
+                    <div>
+                        <div className="flex justify-between items-center mb-3"><h3 className="font-bold text-slate-700 text-lg">分類統計 <span className="text-xs text-slate-400 font-normal ml-2">(點擊篩選)</span></h3>{filterCategory && <button onClick={() => setFilterCategory(null)} className="text-xs text-pink-500 font-bold bg-pink-50 px-2 py-1 rounded-lg">清除篩選</button>}</div>
+                        <div className="space-y-3">{Object.entries(expensesByCategory).map(([key, val]) => (val.nt > 0 || val.jpy > 0) && (<div key={key} onClick={() => setFilterCategory(filterCategory === key ? null : key)} className={`rounded-xl p-3 border transition-all cursor-pointer active:scale-95 ${filterCategory === key ? 'bg-pink-50 border-pink-300 ring-2 ring-pink-200 shadow-md' : 'bg-slate-50 border-slate-100 hover:bg-slate-100'}`}><div className="flex justify-between items-center mb-2"><div className="flex items-center gap-2"><div className={`w-8 h-8 rounded-full flex items-center justify-center ${val.color.replace('text-', 'bg-').split(' ')[0]} text-white shadow-sm`}><Icon n={CATS[key]?.i || 'DollarSign'} s={16} /></div><span className={`font-bold ${filterCategory === key ? 'text-pink-700' : 'text-slate-700'}`}>{val.label}</span></div>{filterCategory === key && <div className="text-pink-500"><Icon n="Check" s={16} /></div>}</div><div className="flex justify-end gap-4 text-sm font-mono font-bold text-slate-600">{val.nt > 0 && <span>NT$ {fmtMoney(val.nt)}</span>}{val.jpy > 0 && <span>¥ {fmtMoney(val.jpy)}</span>}</div></div>))}</div>
+                    </div>
+                    <div><h3 className="font-bold text-slate-700 mb-3 text-lg flex items-center gap-2">{filterCategory ? <><span className="text-pink-500"><Icon n={CATS[filterCategory]?.i} s={20} /></span> {CATS[filterCategory]?.l}明細</> : '所有消費明細'}</h3><div className="space-y-2">{displayedExpenses.length > 0 ? displayedExpenses.map((ex, i) => (<div key={i} onClick={() => onItemClick(ex.dayId, ex.itemId)} className="flex justify-between items-center p-3 border-b border-slate-100 last:border-0 animate-fade-in cursor-pointer hover:bg-slate-50 active:bg-slate-100 transition-colors rounded-lg"><div className="flex-1"><div className="text-xs text-slate-400 mb-0.5">{ex.date} {ex.time} · {CATS[ex.category]?.l || '其他'}</div><div className="font-bold text-slate-800 text-sm line-clamp-1">{ex.title}</div><div className="text-xs text-slate-500 mt-0.5">{ex.label}</div></div><div className="font-mono font-bold text-slate-700 text-right"><span className="text-xs text-slate-400 mr-1">{ex.currency}</span>{fmtMoney(ex.amount)}</div></div>)) : <div className="text-center py-8 text-slate-400 text-sm">此分類尚無消費紀錄</div>}</div></div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const NotebookModal = ({ memos, setMemos, onClose, editMemoItem, setEditMemoItem, memoSort, setMemoSort, saveMemo, deleteMemo, setViewImgIdx }) => {
+    const memoSortableRef = useRef(null);
+    const memoSortableInstance = useRef(null);
+    const imgInputRef = useRef(null);
+    const urlInputRef = useRef(null);
+
+    useEffect(() => {
+        if (memoSort && memoSortableRef.current) {
+            memoSortableInstance.current = new Sortable(memoSortableRef.current, {
+                animation: 150, handle: ".drag-handle-memo", delay: 0, ghostClass: "sortable-ghost", dragClass: "sortable-drag", touchStartThreshold: 3, onEnd: (evt) => {
+                    const { oldIndex, newIndex } = evt;
+                    if (oldIndex === undefined || newIndex === undefined || oldIndex === newIndex) return;
+                    setMemos(prev => { const newMemos = [...prev]; const [movedItem] = newMemos.splice(oldIndex, 1); newMemos.splice(newIndex, 0, movedItem); return newMemos; });
+                }
+            });
+        } else if (memoSortableInstance.current) { memoSortableInstance.current.destroy(); memoSortableInstance.current = null; }
+    }, [memoSort, setMemos]);
+
+    const handleImageUpload = (e) => {
+        const file = e.target.files?.[0]; if (!file || !editMemoItem) return;
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas'); let width = img.width; let height = img.height; const MAX_SIZE = 800;
+                if (width > height && width > MAX_SIZE) { height *= MAX_SIZE / width; width = MAX_SIZE; } else if (height > MAX_SIZE) { width *= MAX_SIZE / height; height = MAX_SIZE; }
+                canvas.width = width; canvas.height = height; const ctx = canvas.getContext('2d');
+                if(ctx){
+                    ctx.drawImage(img, 0, 0, width, height);
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                    setEditMemoItem({ ...editMemoItem, images: [...(editMemoItem.images || []), { url: dataUrl, text: '' }] });
+                }
+            }
+            img.src = event.target?.result;
+        }
+        reader.readAsDataURL(file);
+    };
+
+    const handleAddUrl = () => {
+        if (urlInputRef.current && urlInputRef.current.value && editMemoItem) {
+            const val = urlInputRef.current.value.trim();
+            if (val) {
+                setEditMemoItem({ ...editMemoItem, images: [...(editMemoItem.images || []), { url: val, text: '' }] });
+                urlInputRef.current.value = '';
+            }
+        }
+    };
+
+    const handlePaste = (e) => {
+        if(!editMemoItem) return;
+        const items = e.clipboardData.items;
+        for (let i = 0; i < items.length; i++) {
+            if (items[i].type.indexOf("image") !== -1) {
+                const blob = items[i].getAsFile();
+                if(blob){
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        const img = new Image();
+                        img.onload = () => {
+                            const canvas = document.createElement('canvas'); let width = img.width; let height = img.height; const MAX_SIZE = 800;
+                            if (width > height && width > MAX_SIZE) { height *= MAX_SIZE / width; width = MAX_SIZE; } else if (height > MAX_SIZE) { width *= MAX_SIZE / height; height = MAX_SIZE; }
+                            canvas.width = width; canvas.height = height; const ctx = canvas.getContext('2d');
+                            if(ctx){
+                                ctx.drawImage(img, 0, 0, width, height);
+                                const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                                setEditMemoItem({ ...editMemoItem, images: [...(editMemoItem.images || []), { url: dataUrl, text: '' }] });
+                            }
+                        };
+                        img.src = event.target?.result;
+                    };
+                    reader.readAsDataURL(blob);
+                    e.preventDefault();
+                    return;
+                }
+            }
+        }
+    };
+
+    const moveImg = (idx, dir) => {
+        if(!editMemoItem) return;
+        const newImgs = [...(editMemoItem.images || [])];
+        const target = idx + dir;
+        if (target < 0 || target >= newImgs.length) return;
+        [newImgs[idx], newImgs[target]] = [newImgs[target], newImgs[idx]];
+        setEditMemoItem({ ...editMemoItem, images: newImgs });
+    };
+
+    return (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[100] flex items-end sm:items-center justify-center animate-fade-in">
+            <div className="bg-white w-full sm:w-[95%] max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[95vh] h-[95vh]">
+                <div className="px-6 py-5 border-b flex justify-between items-center bg-yellow-50 rounded-t-3xl">
+                    <h2 className="font-bold text-xl text-yellow-600 flex items-center gap-2"><Icon n="Book" s={24} /> 隨身筆記本</h2>
+                    {memoSort ? (<button onClick={() => setMemoSort(false)} className="bg-blue-500 text-white px-6 py-2 rounded-full font-bold shadow-lg transition-transform active:scale-95 flex items-center gap-2"><Icon n="Check" s={18} /> 完成</button>) : (<div className="flex gap-2"><button onClick={() => setMemoSort(true)} className="p-2 bg-yellow-100 text-yellow-600 rounded-full active:scale-90 transition-transform"><Icon n="Sort" s={20} /></button>{!editMemoItem && <button onClick={() => setEditMemoItem({ id: Date.now().toString(), title: '', content: '', images: [] })} className="bg-yellow-500 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-sm active:scale-95">+ 新增</button>}<button onClick={() => { onClose(); setEditMemoItem(null); setMemoSort(false) }} className="p-2 bg-white rounded-full shadow-sm text-slate-500"><Icon n="X" s={20} /></button></div>)}
+                </div>
+                <div className="p-4 flex-1 flex flex-col bg-slate-50 overflow-y-auto">
+                    {editMemoItem ? (
+                        <div className="space-y-4 animate-fade-in" onPaste={handlePaste}>
+                            <input type="text" value={editMemoItem.title} onChange={e => setEditMemoItem({ ...editMemoItem, title: e.target.value })} placeholder="筆記標題 (例如: 必買清單)" className="w-full bg-white p-4 rounded-2xl font-bold text-lg border-2 border-yellow-100 outline-none focus:border-yellow-400" />
+                            <textarea value={editMemoItem.content} onChange={e => setEditMemoItem({ ...editMemoItem, content: e.target.value })} placeholder="輸入詳細內容... (支援直接貼上圖片)" className="w-full bg-white p-4 rounded-2xl text-base border-2 border-slate-100 outline-none focus:border-yellow-400 h-40" />
+                            <div><div className="text-sm font-bold text-slate-500 mb-2">圖片 (上傳/貼連結)</div><div className="flex gap-2 mb-2"><input ref={urlInputRef} type="text" placeholder="貼上圖片網址..." className="flex-1 bg-white px-3 py-2 rounded-xl text-sm border border-slate-200 outline-none focus:border-yellow-400" /><button onClick={handleAddUrl} className="bg-yellow-100 text-yellow-600 p-2.5 rounded-xl border border-yellow-200 active:scale-95 flex items-center justify-center"><Icon n="Plus" s={20} /></button><button onClick={() => imgInputRef.current?.click()} className="bg-slate-200 text-slate-600 px-3 py-2 rounded-xl text-sm font-bold active:scale-95 flex items-center gap-1"><Icon n="Image" s={18} /></button><input type="file" ref={imgInputRef} className="hidden" accept="image/*" onChange={handleImageUpload} /></div><div className="grid grid-cols-3 gap-2">{(editMemoItem.images || []).map((imgItem, i) => { const imgSrc = typeof imgItem === 'string' ? imgItem : imgItem.url; return (<div key={i} className="relative aspect-square rounded-xl overflow-hidden border-2 border-slate-200 bg-white group shadow-sm"><img src={imgSrc} onClick={() => setViewImgIdx(i)} className="w-full h-full object-cover cursor-zoom-in" /><div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-1 z-20 pointer-events-none"><button onClick={(e) => { e.stopPropagation(); setEditMemoItem({ ...editMemoItem, images: (editMemoItem.images || []).filter((_, idx) => idx !== i) }) }} className="self-end text-white bg-red-500/80 rounded-full p-1 hover:bg-red-600 pointer-events-auto"><Icon n="X" s={14} /></button><div className="flex justify-between w-full pointer-events-auto">{i > 0 && <button onClick={(e) => moveImg(i, -1)} className="text-white bg-slate-500/80 rounded-full p-1 hover:bg-slate-600"><Icon n="ChevronLeft" s={14} /></button>}{i < (editMemoItem.images || []).length - 1 && <button onClick={(e) => moveImg(i, 1)} className="text-white bg-slate-500/80 rounded-full p-1 ml-auto hover:bg-slate-600"><Icon n="ChevronRight" s={14} /></button>}</div></div></div>); })}</div></div>
+                            <div className="flex gap-3 pt-4">{memos.find(m => m.id === editMemoItem.id) && <button onClick={(e) => { e.stopPropagation(); deleteMemo(editMemoItem.id); }} className="p-4 rounded-2xl bg-red-50 text-red-500 font-bold"><Icon n="Trash2" s={20} /></button>}<button onClick={() => { setEditMemoItem(null) }} className="p-4 rounded-2xl bg-slate-100 text-slate-500 font-bold">放棄</button><button onClick={saveMemo} className="flex-1 bg-yellow-500 text-white rounded-2xl py-4 font-bold text-lg shadow-lg shadow-yellow-200 active:scale-95">儲存筆記</button></div>
+                        </div>
+                    ) : (
+                        <>
+                            {memoSort && <div className="text-center text-xs font-bold text-yellow-600 mb-2">拖曳下方把手進行排序</div>}
+                            <div className="space-y-3 relative" ref={memoSortableRef}>
+                                {memos.length === 0 && <div className="text-center py-10 text-slate-400">尚無筆記，點擊右上角新增！</div>}
+                                {memos.map(memo => (<div key={memo.id} className={`bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex gap-4 ${memoSort ? 'mb-2 border-yellow-400 border-2 no-scale-anim' : 'active:scale-98 transition-transform'}`} onClick={() => !memoSort && setEditMemoItem(memo)}>{memoSort && <div className="drag-handle-memo flex items-center justify-center text-slate-300 pr-2 cursor-grab"><Icon n="DragHandle" s={20} /></div>}{memo.images && memo.images.length > 0 && (<div className="w-20 h-20 shrink-0 rounded-xl overflow-hidden bg-slate-100 relative border border-slate-100"><img src={typeof memo.images[0] === 'string' ? memo.images[0] : memo.images[0].url} className="w-full h-full object-cover" alt="memo thumbnail" /></div>)}<div className="flex-1 min-w-0"><h3 className="font-bold text-slate-800 mb-1 line-clamp-1 text-lg">{memo.title}</h3><p className="text-sm text-slate-500 line-clamp-2"><Linkify text={memo.content} /></p></div></div>))}
+                            </div>
+                        </>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const StepsModal = ({ onClose, dailyTarget, tStep, setTStep, saveBtnText, onSave }) => {
+    const stepRef = useRef(null);
+    useEffect(() => { setTimeout(() => { if (stepRef.current) stepRef.current.focus() }, 300); }, []);
+
+    // 1. 取得目前輸入的步數
+    const currentSteps = Number(tStep) || 0;
+    
+    // 2. 即時計算百分比 (最大 100%)
+    const livePercent = Math.min((currentSteps / dailyTarget) * 100, 100);
+
+    return (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center px-4 animate-fade-in" onClick={(e) => e.target === e.currentTarget && onClose()}>
+            <div className="bg-white w-full max-w-xs rounded-3xl shadow-2xl p-6 card-shadow relative overflow-hidden">
+                <div className="absolute -top-10 -right-10 w-32 h-32 bg-pink-100 rounded-full opacity-50 pointer-events-none"></div>
+                <div className="flex justify-between items-center mb-6 relative z-10">
+                    <h3 className="font-black text-2xl text-slate-800 flex items-center gap-2"><span className="text-pink-500"><Icon n="Flag" s={32} /></span>今日運動目標</h3>
+                    <button onClick={onClose} className="w-10 h-10 flex items-center justify-center bg-slate-100 rounded-full text-slate-400 hover:bg-rose-100 hover:text-rose-500 transition-colors"><Icon n="X" s={24} /></button>
+                </div>
+
+                <div className="bg-gradient-to-br from-slate-50 to-white border border-slate-100 rounded-2xl p-4 mb-5 relative z-10 shadow-inner">
+                    <div className="flex justify-between items-end mb-2">
+                        <span className="text-xs font-bold text-slate-400">完成度</span>
+                        {/* 顯示數字 */}
+                        <span className="text-2xl font-black text-rose-500">{Math.round(livePercent)}%</span>
+                    </div>
+                    <div className="w-full h-4 bg-slate-100 rounded-full overflow-hidden shadow-inner border border-slate-200">
+                        {/* ★ 關鍵修改：樣式寬度改用 livePercent + '%' */}
+                        <div 
+                            className="h-full bg-gradient-to-r from-pink-400 to-rose-500 transition-all duration-300 ease-out progress-bar-stripe" 
+                            style={{ width: livePercent + '%' }}
+                        ></div>
+                    </div>
+                    <div className="flex justify-between text-[10px] font-bold text-slate-400 mt-1">
+                        <span>0</span>
+                        <span>目標: {dailyTarget.toLocaleString()}</span>
+                    </div>
+                </div>
+
+                <div className="space-y-3 mb-6 relative z-10">
+                    <div className="flex items-center justify-between bg-slate-50 p-3 rounded-xl border border-slate-100"><div className="flex items-center gap-2 text-slate-500 font-bold text-sm"><Icon n="Map" s={18} /> 距離</div><div className="font-mono font-bold text-slate-700 text-lg">≈ {(currentSteps * 0.0007).toFixed(1)} <span className="text-xs font-normal text-slate-400">km</span></div></div>
+                    <div className="flex items-center justify-between bg-slate-50 p-3 rounded-xl border border-slate-100">
+                        <div className="flex items-center gap-2 text-orange-500 font-bold text-sm"><Icon n="Fire" s={18} /> 目前已消耗</div>
+                        <div className="font-mono font-bold text-orange-500 text-lg">{Math.round(currentSteps * 0.04)} <span className="text-xs font-normal text-slate-400">kcal</span></div>
+                    </div>
+                    <div className="text-center text-[10px] text-slate-400 font-bold mt-1">( 若達標將消耗 ≈ {Math.round(dailyTarget * 0.04)} kcal )</div>
+                </div>
+
+                <div className="mb-2 text-sm font-bold text-rose-500 ml-1 relative z-10">輸入實際步數</div>
+                <input ref={stepRef} type="number" value={tStep} onChange={e => setTStep(e.target.value)} className="w-full bg-white border-2 border-pink-200 rounded-2xl p-4 text-center font-bold font-mono text-3xl outline-none focus:border-pink-400 text-rose-500 placeholder:text-slate-200 mb-4 shadow-sm relative z-10 transition-all focus:shadow-md focus:-translate-y-0.5" placeholder="0" />
+                <button onClick={onSave} className="w-full bg-gradient-to-r from-pink-500 to-rose-500 text-white rounded-2xl py-4 font-bold text-lg shadow-lg shadow-pink-200 active:scale-95 transition-transform relative z-10">{saveBtnText}</button>
+            </div>
+        </div>
+    );
+};
+const Lightbox = ({ viewImgIdx, setViewImgIdx, editItem, editMemoItem, setEditItem, setEditMemoItem }) => {
+    const [showLargeInput, setShowLargeInput] = useState(false);
+    useEffect(() => { if (viewImgIdx === null) setShowLargeInput(false) }, [viewImgIdx]);
+
+    const activeItem = editMemoItem || editItem;
+    if (!activeItem || viewImgIdx === null) return null;
+
+    const imgData = (activeItem.images || [])[viewImgIdx];
+    const imgSrc = typeof imgData === 'string' ? imgData : imgData.url;
+    const imgText = typeof imgData === 'string' ? '' : (imgData.text || '');
+
+    const handleTextChange = (e) => {
+        const isMemo = !!editMemoItem;
+        const newImgs = [...(activeItem.images || [])];
+        const currentImg = newImgs[viewImgIdx];
+        const url = typeof currentImg === 'string' ? currentImg : currentImg.url;
+        
+        const newImageItem = { url: url, text: e.target.value };
+        newImgs[viewImgIdx] = newImageItem;
+
+        if (isMemo && editMemoItem) setEditMemoItem({ ...editMemoItem, images: newImgs });
+        else if(editItem) setEditItem({ ...editItem, images: newImgs });
+    };
+
+    return (
+        <div className="fixed inset-0 z-[120] bg-black/95 flex flex-col items-center justify-center p-4 animate-fade-in" onClick={() => setViewImgIdx(null)}>
+            <button onClick={() => setViewImgIdx(null)} className="absolute top-6 right-6 text-white/80 hover:text-white bg-white/10 rounded-full p-2 backdrop-blur-sm z-50"><Icon n="X" s={24} /></button>
+            <div className="flex-1 w-full flex items-center justify-center min-h-0 py-4" onClick={e => e.stopPropagation()}>
+                <img src={imgSrc} className="max-w-full max-h-full object-contain rounded-lg shadow-2xl cursor-default" alt="full view" />
+            </div>
+            <div className={`w-full max-w-lg bg-white transition-all duration-300 ease-out ${showLargeInput ? 'h-[50vh] rounded-t-3xl rounded-b-none' : 'rounded-2xl h-auto'} p-3 flex flex-col gap-2 shrink-0 mb-safe shadow-xl z-50`} onClick={e => e.stopPropagation()}>
+                <div className="flex gap-3 items-start h-full">
+                    <div className="text-slate-400 mt-2 shrink-0"><Icon n="Edit" s={20} /></div>
+                    <textarea placeholder="輸入圖片備註 (例如: 必買藥妝)..." value={imgText} onChange={handleTextChange} className={`flex-1 bg-transparent text-slate-800 font-bold text-sm outline-none resize-none leading-relaxed transition-all ${showLargeInput ? 'h-full p-2' : 'h-10 py-2'}`} />
+                    <button onClick={() => setShowLargeInput(!showLargeInput)} className="p-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded-xl transition-colors shrink-0"><Icon n={showLargeInput ? "Minimize" : "Maximize"} s={20} /></button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const App = () => {
+    const [data, setData] = useState(() => { const s = localStorage.getItem('kanto_v47_data'); return s ? JSON.parse(s) : INITIAL_ITINERARY; });
+    const [memos, setMemos] = useState(() => { const s = localStorage.getItem('kanto_v47_memos'); return s ? JSON.parse(s) : []; });
+    const [idx, setIdx] = useState(0);
+    const [modal, setModal] = useState(false);
+    const [ledgerModal, setLedgerModal] = useState(false);
+    const [notebookModal, setNotebookModal] = useState(false);
+    const [editItem, setEditItem] = useState(null);
+    const [editMemoItem, setEditMemoItem] = useState(null);
+    const [sort, setSort] = useState(false);
+    const [memoSort, setMemoSort] = useState(false);
+    const [backupData, setBackupData] = useState(null);
+    const [stepModal, setStepModal] = useState(false);
+    const [tStep, setTStep] = useState('');
+    const [saveBtnText, setSaveBtnText] = useState('儲存紀錄');
+    const [footerExpanded, setFooterExpanded] = useState(true);
+    const [expandedNotes, setExpandedNotes] = useState(new Set());
+    const [filterCategory, setFilterCategory] = useState(null);
+    const [liveWeather, setLiveWeather] = useState(null);
+    const [menuOpen, setMenuOpen] = useState(false);
+    const [addMenuOpen, setAddMenuOpen] = useState(false);
+    const [viewImgIdx, setViewImgIdx] = useState(null);
+    const [now, setNow] = useState(new Date());
+
+    const scrollRef = useRef(null);
+    const fileRef = useRef(null);
+    const sortableRef = useRef(null);
+    const sortableInstance = useRef(null);
+    const longPressTimer = useRef(null);
+
+    const checkStorageQuota = () => {
+        const total = JSON.stringify(data).length + JSON.stringify(memos).length;
+        if (total > STORAGE_LIMIT_WARNING) alert("⚠️ 警告：資料量接近瀏覽器上限！\n請備份資料或刪除部分圖片，以免存檔失敗。");
+    };
+
+    useEffect(() => { localStorage.setItem('kanto_v47_data', JSON.stringify(data)); checkStorageQuota(); }, [data]);
+    useEffect(() => { localStorage.setItem('kanto_v47_memos', JSON.stringify(memos)); checkStorageQuota(); }, [memos]);
+    
+    useEffect(() => {
+        const timer = setInterval(() => setNow(new Date()), 60000);
+        return () => clearInterval(timer);
+    }, []);
+
+    useEffect(() => { if (stepModal) { setSaveBtnText('儲存紀錄') } }, [stepModal]);
+
+    useEffect(() => {
+        const fetchWeather = async () => {
+            const coord = LOCATIONS_COORD.find(c => c.id === data[idx].id);
+            if (!coord) return; setLiveWeather(null);
+            try {
+                const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${coord.lat}&longitude=${coord.lng}&current=temperature_2m,weather_code&timezone=Asia%2FTokyo`);
+                const json = await res.json();
+                if (json.current) setLiveWeather({ temp: Math.round(json.current.temperature_2m), code: json.current.weather_code });
+            } catch (e) { console.error(e); }
+        };
+        fetchWeather();
+    }, [idx, data]);
+
+    useEffect(() => {
+        if (sort && sortableRef.current) {
+            sortableInstance.current = new Sortable(sortableRef.current, {
+                animation: 150, handle: ".drag-handle", delay: 0, ghostClass: "sortable-ghost", dragClass: "sortable-drag", onEnd: (evt) => {
+                    const { oldIndex, newIndex } = evt;
+                    if (oldIndex === undefined || newIndex === undefined || oldIndex === newIndex) return;
+                    setData(prev => { const newData = [...prev]; const items = [...newData[idx].items]; const [movedItem] = items.splice(oldIndex, 1); items.splice(newIndex, 0, movedItem); newData[idx].items = items; return newData; });
+                }
+            });
+        } else if (sortableInstance.current) { sortableInstance.current.destroy(); sortableInstance.current = null; }
+    }, [sort, idx]);
+
+    const startLongPress = useCallback(() => { if (sort) return; longPressTimer.current = setTimeout(() => { if (navigator.vibrate) navigator.vibrate(50); setBackupData(JSON.parse(JSON.stringify(data))); setSort(true); setFooterExpanded(true); }, 800); }, [sort, data]);
+    const endLongPress = useCallback(() => { if (longPressTimer.current) { clearTimeout(longPressTimer.current); longPressTimer.current = null; } }, []);
+    const cancelSort = () => { if (backupData) setData(backupData); setSort(false); setBackupData(null); };
+    const finishSort = () => { setSort(false); setBackupData(null); };
+
+    const day = data[idx];
+    let totalNT = 0, totalJPY = 0;
+    data.forEach(d => d.items.forEach(i => {
+        (i.expenses || []).forEach(ex => {
+            if (ex.currency === 'NT') totalNT += Number(ex.amount || 0); else totalJPY += Number(ex.amount || 0);
+        });
+    }));
+
+    const itemSumSteps = day.items.reduce((sum, i) => sum + Number(i.steps || 0), 0);
+    const dailyTarget = Math.max(DEFAULT_DAILY_GOAL, itemSumSteps);
+    const currentActualSteps = Number(day.steps) || 0;
+    const progressPercent = Math.min((currentActualSteps / dailyTarget) * 100, 100);
+
+    const saveStep = () => { const newData = [...data]; newData[idx].steps = Number(tStep); setData(newData); setSaveBtnText('✅ 已更新！'); setTimeout(() => setSaveBtnText('儲存紀錄'), 1500); };
+    const exportData = () => { const backup = { itinerary: data, memos: memos }; const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(backup)], { type: 'application/json' })); a.download = 'KantoTrip_Backup_V47.json'; a.click() };
+    const importData = (e) => {
+        const r = new FileReader();
+        r.onload = (ev) => { try { const d = JSON.parse(ev.target.result); if (d.itinerary) { setData(d.itinerary); setMemos(d.memos ? (Array.isArray(d.memos) ? d.memos : Object.values(d.memos)) : []); } else if (Array.isArray(d)) { setData(d); } alert('✅ 讀取成功！'); setSort(false) } catch (err) { alert('❌ 檔案錯誤'); } };
+        if (e.target.files[0]) r.readAsText(e.target.files[0]); e.target.value = ''
+    };
+
+    const handleScreenshot = () => {
+        setMenuOpen(false);
+        const el = document.getElementById("itinerary-container");
+        if (!el) return alert("截圖失敗");
+        html2canvas(el, { useCORS: true, backgroundColor: "#fff7ed" }).then(canvas => {
+            const link = document.createElement('a');
+            link.download = `Day${idx + 1}_${day.date.replace('/', '')}_Itinerary.png`;
+            link.href = canvas.toDataURL();
+            link.click();
+        }).catch(e => alert("截圖失敗 (可能因圖片跨域問題)"));
+    };
+
+    const getDailyRouteUrl = (items) => { const validItems = items.filter(i => i.type !== 'memo'); return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(validItems[validItems.length - 1]?.title)}&waypoints=${validItems.map(i => encodeURIComponent(i.searchKeyword?.trim() || i.title)).join('|')}` };
+    const getWeatherUrl = () => { const zip = LOCATIONS_COORD.find(c => c.id === day.id); return `https://tenki.jp/search/?keyword=${zip ? zip.id : ''}`; };
+
+    const toggle = (id) => { const newData = [...data]; const item = newData[idx].items.find(i => i.id === id); if (item) { item.completed = !item.completed; setData(newData) } };
+    const toggleNote = (id) => { const newSet = new Set(expandedNotes); if (newSet.has(id)) newSet.delete(id); else newSet.add(id); setExpandedNotes(newSet); };
+    
+    const handleLedgerClick = (dayId, itemId) => { const d = data.find(day => day.id === dayId); if (d) { const item = d.items.find(i => i.id === itemId); if (item) { setEditItem({ ...item, dayId: dayId, originalDayId: dayId }); setModal(true); setLedgerModal(false); } } };
+
+    const saveItem = () => {
+        if (!editItem) return;
+        if (editItem.type === 'memo') { if (!editItem.title) { const dateStr = new Date().toLocaleString('zh-TW', { hour12: false, month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }); editItem.title = editItem.note ? (editItem.note.substring(0, 10) + (editItem.note.length > 10 ? "..." : "")) : (editItem.images && editItem.images.length > 0 ? "圖片便條" : `隨手便條 ${dateStr}`) } } else { if (!editItem.title) return alert('請輸入行程標題'); }
+        if (editItem.type === 'normal' && editItem._h !== undefined && editItem._m !== undefined) { editItem.time = `${editItem._h}:${editItem._m}`; delete editItem._h; delete editItem._m; }
+        const newData = [...data];
+        const isMovingDay = editItem.originalDayId && editItem.originalDayId !== editItem.dayId;
+        if (isMovingDay) {
+            const sourceDay = newData.find(d => d.id === editItem.originalDayId); if (sourceDay) sourceDay.items = sourceDay.items.filter(x => x.id !== editItem.id);
+            const targetDay = newData.find(d => d.id === editItem.dayId); if (targetDay) targetDay.items.push(editItem);
+        } else {
+            const targetDay = newData.find(d => d.id === editItem.dayId); if (targetDay) { const existingIdx = targetDay.items.findIndex(x => x.id === editItem.id); if (existingIdx > -1) targetDay.items[existingIdx] = editItem; else targetDay.items.push(editItem); }
+        }
+        setData(newData); setModal(false);
+    };
+
+    const saveMemo = () => {
+        if (!editMemoItem) return;
+        let itemToSave = { ...editMemoItem };
+        if (!itemToSave.title.trim()) { const dateStr = new Date().toLocaleString('zh-TW', { hour12: false, month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }); itemToSave.title = itemToSave.content.trim() ? (itemToSave.content.substring(0, 10) + (itemToSave.content.length > 10 ? "..." : "")) : `筆記 ${dateStr}`; }
+        setMemos(prev => { const idx = prev.findIndex(m => m.id === itemToSave.id); if (idx > -1) { const newMemos = [...prev]; newMemos[idx] = itemToSave; return newMemos; } else { return [...prev, itemToSave]; } });
+        setEditMemoItem(null);
+    };
+
+    const deleteMemo = (id) => { if (confirm('刪除此筆記?')) { setMemos(prev => prev.filter(m => m.id !== id)); setEditMemoItem(null); } };
+    const delItem = () => { if (!editItem) return; const newData = [...data]; const d = newData.find(d => d.id === editItem.dayId); if (d) { d.items = d.items.filter(x => x.id !== editItem.id); setData(newData); } setModal(false); };
+    const copyMapcode = (code) => { navigator.clipboard.writeText(code).then(() => alert('✅ Mapcode 已複製：' + code)).catch(() => alert('複製失敗')); };
+
+    return (
+        <div className={`h-[100dvh] flex flex-col font-sans text-slate-800 bg-[#fff7ed] ${sort ? 'sort-mode-bg' : ''}`}>
+            <Header day={day} idx={idx} totalDays={data.length} liveWeather={liveWeather} currentActualSteps={currentActualSteps} sort={sort} setIdx={setIdx} setSort={setSort} onScrollTop={() => scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' })} setStepModal={setStepModal} setTStep={setTStep} />
+            
+            <div ref={scrollRef} className={`flex-1 overflow-y-auto relative scroll-smooth-mobile -mt-2 pt-4`}>
+                <div id="itinerary-container" className="py-2 pb-32 space-y-6 bg-[#fff7ed]">
+                    {!sort && liveWeather && ([71, 73, 75, 77, 85, 86, 95, 96, 99].includes(liveWeather.code) || [51, 53, 55, 61, 63, 65, 80, 81, 82].includes(liveWeather.code)) && (
+                        <div className={`mx-4 border-2 rounded-3xl p-3 shadow-sm flex items-center gap-3 mb-4 animate-fade-in ${[71, 73, 75, 77, 85, 86, 95, 96, 99].includes(liveWeather.code) ? 'bg-gradient-to-r from-cyan-50 to-blue-50 border-cyan-200' : 'bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200'}`}>
+                            <div className={[71, 73, 75, 77, 85, 86, 95, 96, 99].includes(liveWeather.code) ? 'text-cyan-500' : 'text-blue-500'}><Icon n={[71, 73, 75, 77, 85, 86, 95, 96, 99].includes(liveWeather.code) ? 'CloudSnow' : 'CloudRain'} s={24} /></div>
+                            <div className="flex-1">
+                                <div className={`font-bold text-sm ${[71, 73, 75, 77, 85, 86, 95, 96, 99].includes(liveWeather.code) ? 'text-cyan-800' : 'text-blue-800'}`}>{ [71, 73, 75, 77, 85, 86, 95, 96, 99].includes(liveWeather.code) ? '❄️ 目前有雪｜建議備妥雪鍊' : '🌧️ 目前有雨｜天雨路滑請小心'}</div>
+                                <a href={getWeatherUrl()} target="_blank" rel="noreferrer" className={`text-[10px] font-bold underline mt-0.5 block ${[71, 73, 75, 77, 85, 86, 95, 96, 99].includes(liveWeather.code) ? 'text-cyan-500' : 'text-blue-500'}`}>點此確認當地天氣預報 &gt;</a>
+                            </div>
+                        </div>
+                    )}
+                    <div ref={sortableRef} className="relative">
+                        {!sort && <div className="absolute left-[24px] top-4 bottom-4 w-[3px] bg-slate-300 rounded-full z-0" />}
+                        {day.items.map((item, i) => {
+                            if (item.type === 'memo') return <MemoItem key={item.id} item={item} sort={sort} onToggleNote={() => toggleNote(item.id)} onEdit={() => { setEditItem({ ...item, dayId: day.id, originalDayId: day.id }); setModal(true); }} startLongPress={startLongPress} endLongPress={endLongPress} setViewImgIdx={setViewImgIdx} />;
+                            return <ItineraryItem key={item.id} item={item} nextItem={day.items[i + 1]} sort={sort} dayDate={day.date} isExpanded={expandedNotes.has(item.id)} onToggle={() => toggle(item.id)} onToggleNote={() => toggleNote(item.id)} onEdit={() => { setEditItem({ ...item, dayId: day.id, originalDayId: day.id }); setModal(true); }} startLongPress={startLongPress} endLongPress={endLongPress} copyMapcode={copyMapcode} now={now} />;
+                        })}
+                    </div>
+                    {!sort && <div className="mt-6 mb-4 flex justify-center"><a href={getDailyRouteUrl(day.items)} target="_blank" rel="noreferrer" className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-8 py-4 rounded-full shadow-lg font-bold text-base flex items-center gap-2 active:scale-95 transition-transform hover:shadow-xl border-2 border-white/50"><Icon n="Route" s={22} /> 🚗 查看今日總路線</a></div>}
+                </div>
+            </div>
+
+            <Footer sort={sort} footerExpanded={footerExpanded} setFooterExpanded={setFooterExpanded} cancelSort={cancelSort} finishSort={finishSort} totalNT={totalNT} totalJPY={totalJPY} setNotebookModal={setNotebookModal} setFilterCategory={setFilterCategory} setLedgerModal={setLedgerModal} addMenuOpen={addMenuOpen} setAddMenuOpen={setAddMenuOpen} onAddItem={(type) => { setAddMenuOpen(false); if (type === 'normal') setEditItem({ id: Date.now().toString(), time: '12:00', title: '', category: 'sightseeing', expenses: [], note: '', mapcode: '', searchKeyword: '', completed: false, dayId: day.id, originalDayId: day.id, steps: 0, type: 'normal' }); else setEditItem({ id: Date.now().toString(), title: '', note: '', images: [], dayId: day.id, originalDayId: day.id, type: 'memo', category: 'memo' }); setModal(true); }} menuOpen={menuOpen} setMenuOpen={setMenuOpen} handleScreenshot={handleScreenshot} exportData={exportData} fileRef={fileRef} />
+            <input type="file" ref={fileRef} onChange={importData} accept=".json" className="hidden" />
+
+            {modal && editItem && <EditModal editItem={editItem} setEditItem={setEditItem} data={data} onClose={() => setModal(false)} onSave={saveItem} onDelete={delItem} setViewImgIdx={setViewImgIdx} />}
+            {ledgerModal && <LedgerModal data={data} onClose={() => setLedgerModal(false)} filterCategory={filterCategory} setFilterCategory={setFilterCategory} onItemClick={handleLedgerClick} />}
+            {notebookModal && <NotebookModal memos={memos} setMemos={setMemos} onClose={() => setNotebookModal(false)} editMemoItem={editMemoItem} setEditMemoItem={setEditMemoItem} memoSort={memoSort} setMemoSort={setMemoSort} saveMemo={saveMemo} deleteMemo={deleteMemo} setViewImgIdx={setViewImgIdx} />}
+            {stepModal && <StepsModal onClose={() => setStepModal(false)} dailyTarget={dailyTarget} tStep={tStep} setTStep={setTStep} saveBtnText={saveBtnText} onSave={saveStep} />}
+            {(editItem || editMemoItem) && viewImgIdx !== null && <Lightbox viewImgIdx={viewImgIdx} setViewImgIdx={setViewImgIdx} editItem={editItem} editMemoItem={editMemoItem} setEditItem={setEditItem} setEditMemoItem={setEditMemoItem} />}
+        </div>
+    );
+}
+const root=ReactDOM.createRoot(document.getElementById('root'));root.render(<App/>);
+</script>
+</body>
+</html>
