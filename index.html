@@ -917,7 +917,7 @@ function App(){
             memoSortableInstance.current = new Sortable(memoSortableRef.current, {
                 animation: 150, 
                 handle: ".drag-handle-memo",
-                delay: 0,
+                delay: 0, 
                 ghostClass: "sortable-ghost",
                 dragClass: "sortable-drag",
                 touchStartThreshold: 3,
@@ -1554,7 +1554,7 @@ function App(){
 
             {/* Ledger Modal */}
             {ledgerModal && <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[100] flex items-end sm:items-center justify-center animate-fade-in">
-                <div className="bg-white w-full sm:w-[95%] max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[85vh] h-[85vh]">
+                <div className="bg-white w-full sm:w-[95%] max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[80dvh] h-[80dvh]">
                     <div className="px-6 py-5 border-b flex justify-between items-center bg-blue-50 rounded-t-3xl"><h2 className="font-bold text-xl text-blue-600 flex items-center gap-2"><Icon n="Wallet" s={24}/> 旅遊帳本</h2><button onClick={()=>setLedgerModal(false)} className="p-2 bg-white rounded-full shadow-sm text-slate-500"><Icon n="X" s={20}/></button></div>
                     <div className="p-6 overflow-y-auto flex-1 space-y-6">
                         <div className="grid grid-cols-1 gap-4"> 
@@ -1573,7 +1573,7 @@ function App(){
             {/* Independent Notebook Modal (Stabilized) */}
             {notebookModal && (
                 <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[100] flex items-end sm:items-center justify-center animate-fade-in">
-                    <div className="bg-white w-full sm:w-[95%] max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[95vh] h-[95vh]">
+                    <div className="bg-white w-full sm:w-[95%] max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[80dvh] h-[80dvh]">
                         <div className="px-6 py-5 border-b flex justify-between items-center bg-yellow-50 rounded-t-3xl">
                             <h2 className="font-bold text-xl text-yellow-600 flex items-center gap-2"><Icon n="Book" s={24}/> 隨身筆記本</h2>
                             {memoSort ? (
@@ -1706,7 +1706,7 @@ function App(){
 
             {/* Combined Edit Modal */}
             {modal && editItem && <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[100] flex items-end sm:items-center justify-center animate-fade-in">
-                <div className="bg-white w-full sm:w-[95%] max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[95vh]">
+                <div className="bg-white w-full sm:w-[95%] max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[80dvh]">
                     <div className={`px-6 py-5 border-b flex justify-between items-center rounded-t-3xl ${editItem.type==='memo'?'bg-yellow-50':'bg-slate-50'}`}>
                         <h2 className={`font-bold text-2xl font-rounded ${editItem.type==='memo'?'text-yellow-600':'text-slate-800'}`}>
                             {editItem.id && data.some(d=>d.items && d.items.some(i=>i && i.id===editItem.id)) ? (editItem.type==='memo'?'編輯便條':'編輯行程') : (editItem.type==='memo'?'新增便條':'新增行程')}
